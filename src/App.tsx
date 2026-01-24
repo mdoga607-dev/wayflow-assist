@@ -7,6 +7,7 @@ import MainLayout from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Shipments from "./pages/Shipments";
 import AddShipment from "./pages/AddShipment";
+import ScanShipments from "./pages/ScanShipments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/shipments" element={<Shipments />} />
             <Route path="/add-shipment" element={<AddShipment />} />
+            <Route path="/scan" element={<ScanShipments />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
