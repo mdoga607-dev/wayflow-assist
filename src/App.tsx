@@ -8,6 +8,9 @@ import Dashboard from "./pages/Dashboard";
 import Shipments from "./pages/Shipments";
 import AddShipment from "./pages/AddShipment";
 import ScanShipments from "./pages/ScanShipments";
+import BalanceManagement from "./pages/BalanceManagement";
+import DelayedShipments from "./pages/DelayedShipments";
+import DelegateShipments from "./pages/DelegateShipments";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +27,9 @@ const App = () => (
             <Route path="/shipments" element={<Shipments />} />
             <Route path="/add-shipment" element={<AddShipment />} />
             <Route path="/scan" element={<ScanShipments />} />
+            <Route path="/balance" element={<BalanceManagement />} />
+            <Route path="/delayed-shipments" element={<DelayedShipments />} />
+            <Route path="/delegate-shipments" element={<DelegateShipments />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
