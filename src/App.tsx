@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Shipments from "./pages/Shipments";
@@ -11,30 +13,48 @@ import ScanShipments from "./pages/ScanShipments";
 import BalanceManagement from "./pages/BalanceManagement";
 import DelayedShipments from "./pages/DelayedShipments";
 import DelegateShipments from "./pages/DelegateShipments";
+import Auth from "./pages/Auth";
+import GuestOrders from "./pages/GuestOrders";
+import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/shipments" element={<Shipments />} />
-            <Route path="/add-shipment" element={<AddShipment />} />
-            <Route path="/scan" element={<ScanShipments />} />
-            <Route path="/balance" element={<BalanceManagement />} />
-            <Route path="/delayed-shipments" element={<DelayedShipments />} />
-            <Route path="/delegate-shipments" element={<DelegateShipments />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/guest" element={<GuestOrders />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+
+            {/* Protected Routes */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/shipments" element={<Shipments />} />
+              <Route path="/add-shipment" element={<AddShipment />} />
+              <Route path="/scan" element={<ScanShipments />} />
+              <Route path="/balance" element={<BalanceManagement />} />
+              <Route path="/delayed-shipments" element={<DelayedShipments />} />
+              <Route path="/delegate-shipments" element={<DelegateShipments />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
