@@ -19,6 +19,9 @@ import Returns from "./pages/Returns";
 import UserManagement from "./pages/UserManagement";
 import ExportShipments from "./pages/ExportShipments";
 import PaymentDocuments from "./pages/PaymentDocuments";
+import ShippersManagement from "./pages/ShippersManagement";
+import DelegatesManagement from "./pages/DelegatesManagement";
+import DelegateStats from "./pages/DelegateStats";
 import Auth from "./pages/Auth";
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
@@ -60,6 +63,9 @@ const App = () => (
                 <Route path="/users" element={<UserManagement />} />
                 <Route path="/export" element={<ExportShipments />} />
                 <Route path="/payments" element={<PaymentDocuments />} />
+                <Route path="/shippers" element={<ShippersManagement />} />
+                <Route path="/delegates" element={<DelegatesManagement />} />
+                <Route path="/delegate-stats" element={<DelegateStats />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

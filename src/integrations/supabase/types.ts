@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      delegates: {
+        Row: {
+          avatar_url: string | null
+          balance: number | null
+          branch: string | null
+          city: string | null
+          commission_due: number | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          status: string | null
+          total_delayed: number | null
+          total_delivered: number | null
+          total_returned: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          commission_due?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          status?: string | null
+          total_delayed?: number | null
+          total_delivered?: number | null
+          total_returned?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          commission_due?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          status?: string | null
+          total_delayed?: number | null
+          total_delivered?: number | null
+          total_returned?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -44,6 +98,141 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      shipments: {
+        Row: {
+          cod_amount: number | null
+          created_at: string
+          delegate_id: string | null
+          delivered_at: string | null
+          id: string
+          notes: string | null
+          product_name: string | null
+          recipient_address: string | null
+          recipient_area: string | null
+          recipient_city: string | null
+          recipient_name: string
+          recipient_phone: string
+          return_reason: string | null
+          returned_at: string | null
+          shipper_id: string | null
+          shipping_fee: number | null
+          status: string | null
+          tracking_number: string
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          cod_amount?: number | null
+          created_at?: string
+          delegate_id?: string | null
+          delivered_at?: string | null
+          id?: string
+          notes?: string | null
+          product_name?: string | null
+          recipient_address?: string | null
+          recipient_area?: string | null
+          recipient_city?: string | null
+          recipient_name: string
+          recipient_phone: string
+          return_reason?: string | null
+          returned_at?: string | null
+          shipper_id?: string | null
+          shipping_fee?: number | null
+          status?: string | null
+          tracking_number: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          cod_amount?: number | null
+          created_at?: string
+          delegate_id?: string | null
+          delivered_at?: string | null
+          id?: string
+          notes?: string | null
+          product_name?: string | null
+          recipient_address?: string | null
+          recipient_area?: string | null
+          recipient_city?: string | null
+          recipient_name?: string
+          recipient_phone?: string
+          return_reason?: string | null
+          returned_at?: string | null
+          shipper_id?: string | null
+          shipping_fee?: number | null
+          status?: string | null
+          tracking_number?: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_shipper_id_fkey"
+            columns: ["shipper_id"]
+            isOneToOne: false
+            referencedRelation: "shippers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shippers: {
+        Row: {
+          active_shipments: number | null
+          address: string | null
+          balance: number | null
+          branch: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          total_shipments: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_shipments?: number | null
+          address?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          total_shipments?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_shipments?: number | null
+          address?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          total_shipments?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
