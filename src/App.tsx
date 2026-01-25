@@ -13,6 +13,9 @@ import ScanShipments from "./pages/ScanShipments";
 import BalanceManagement from "./pages/BalanceManagement";
 import DelayedShipments from "./pages/DelayedShipments";
 import DelegateShipments from "./pages/DelegateShipments";
+import Reports from "./pages/Reports";
+import Returns from "./pages/Returns";
+import UserManagement from "./pages/UserManagement";
 import Auth from "./pages/Auth";
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
@@ -48,6 +51,9 @@ const App = () => (
               <Route path="/balance" element={<BalanceManagement />} />
               <Route path="/delayed-shipments" element={<DelayedShipments />} />
               <Route path="/delegate-shipments" element={<DelegateShipments />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/returns" element={<Returns />} />
+              <Route path="/users" element={<UserManagement />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
