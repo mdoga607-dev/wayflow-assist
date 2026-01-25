@@ -1,18 +1,59 @@
-import { Bell, LogOut, User, Search, Menu } from "lucide-react";
+import { Bell, LogOut, User, Search, Menu, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
+const getRoleName = (role: string | null) => {
+  switch (role) {
+    case 'head_manager':
+      return 'مدير عام';
+    case 'user':
+      return 'مستخدم';
+    case 'guest':
+      return 'زائر';
+    default:
+      return 'مستخدم';
+  }
+};
+
+const getRoleBadgeColor = (role: string | null) => {
+  switch (role) {
+    case 'head_manager':
+      return 'bg-primary text-primary-foreground';
+    case 'user':
+      return 'bg-blue-500 text-white';
+    case 'guest':
+      return 'bg-gray-500 text-white';
+    default:
+      return 'bg-gray-500 text-white';
+  }
+};
+
 const Header = ({ onToggleSidebar }: HeaderProps) => {
+  const { user, role, signOut, isHeadManager } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  // Get display name from user metadata or email
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'مستخدم';
+
   return (
     <header className="h-16 bg-header text-header-foreground flex items-center justify-between px-6 shadow-lg z-50">
       <div className="flex items-center gap-4">
@@ -64,17 +105,32 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
               className="text-header-foreground hover:bg-white/10 gap-2"
             >
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <User className="h-4 w-4" />
+                {isHeadManager ? (
+                  <Shield className="h-4 w-4" />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
               </div>
-              <span className="hidden md:inline">أحمد محمد</span>
+              <div className="hidden md:flex flex-col items-start">
+                <span className="text-sm">{displayName}</span>
+                <Badge className={`text-[10px] px-1.5 py-0 ${getRoleBadgeColor(role)}`}>
+                  {getRoleName(role)}
+                </Badge>
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
+            <div className="px-2 py-1.5 text-sm">
+              <p className="font-medium">{displayName}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+            <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="ml-2 h-4 w-4" />
               الملف الشخصي
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
               <LogOut className="ml-2 h-4 w-4" />
               تسجيل الخروج
             </DropdownMenuItem>
