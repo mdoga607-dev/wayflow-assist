@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Upload, MapPin, Package, User, Phone, FileText } from "lucide-react";
+import { ArrowRight, Upload, MapPin, Package, User, Phone, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,27 +12,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useShippers } from "@/hooks/useShippers";
+import { useDelegates } from "@/hooks/useDelegates";
+import { useCreateShipment } from "@/hooks/useCreateShipment";
 
 const AddShipment = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: shippers, isLoading: loadingShippers } = useShippers();
+  const { data: delegates, isLoading: loadingDelegates } = useDelegates();
+  const createShipment = useCreateShipment();
+
+  const [formData, setFormData] = useState({
+    recipient_name: "",
+    phone1: "",
+    phone2: "",
+    city: "",
+    address: "",
+    area: "",
+    product_name: "",
+    quantity: "1",
+    weight: "",
+    cod_amount: "",
+    payment_type: "cod",
+    shipping_fee: "25",
+    shipper_id: "",
+    delegate_id: "",
+    notes: "",
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "تم إضافة الشحنة بنجاح",
-      description: "تم إنشاء الشحنة الجديدة وإرسالها للمندوب",
+    await createShipment.mutateAsync({
+      recipient_name: formData.recipient_name,
+      recipient_phone: formData.phone1,
+      recipient_city: formData.city,
+      recipient_address: formData.address,
+      recipient_area: formData.area,
+      product_name: formData.product_name,
+      cod_amount: parseFloat(formData.cod_amount) || 0,
+      shipping_fee: parseFloat(formData.shipping_fee) || 25,
+      weight: formData.weight ? parseFloat(formData.weight) : undefined,
+      notes: formData.notes || undefined,
+      shipper_id: formData.shipper_id || undefined,
+      delegate_id: formData.delegate_id || undefined,
     });
     
-    setIsSubmitting(false);
     navigate("/shipments");
   };
+
+  const shippingFee = parseFloat(formData.shipping_fee) || 25;
+  const tax = shippingFee * 0.15;
+  const total = shippingFee + tax;
 
   return (
     <div className="space-y-6">
@@ -64,6 +99,8 @@ const AddShipment = () => {
             <Input
               id="customerName"
               placeholder="أدخل اسم المستلم"
+              value={formData.recipient_name}
+              onChange={(e) => handleChange("recipient_name", e.target.value)}
               required
             />
           </div>
@@ -77,6 +114,8 @@ const AddShipment = () => {
                 placeholder="05xxxxxxxx"
                 dir="ltr"
                 className="text-right"
+                value={formData.phone1}
+                onChange={(e) => handleChange("phone1", e.target.value)}
                 required
               />
             </div>
@@ -88,22 +127,27 @@ const AddShipment = () => {
                 placeholder="05xxxxxxxx"
                 dir="ltr"
                 className="text-right"
+                value={formData.phone2}
+                onChange={(e) => handleChange("phone2", e.target.value)}
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="city">المدينة *</Label>
-            <Select required>
+            <Select 
+              value={formData.city} 
+              onValueChange={(value) => handleChange("city", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="اختر المدينة" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="riyadh">الرياض</SelectItem>
-                <SelectItem value="jeddah">جدة</SelectItem>
-                <SelectItem value="dammam">الدمام</SelectItem>
-                <SelectItem value="makkah">مكة</SelectItem>
-                <SelectItem value="madinah">المدينة</SelectItem>
+                <SelectItem value="الرياض">الرياض</SelectItem>
+                <SelectItem value="جدة">جدة</SelectItem>
+                <SelectItem value="الدمام">الدمام</SelectItem>
+                <SelectItem value="مكة">مكة</SelectItem>
+                <SelectItem value="المدينة">المدينة</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -115,6 +159,8 @@ const AddShipment = () => {
                 id="address"
                 placeholder="الحي، الشارع، رقم المبنى، معلومات إضافية..."
                 rows={3}
+                value={formData.address}
+                onChange={(e) => handleChange("address", e.target.value)}
                 required
               />
               <Button
@@ -143,6 +189,8 @@ const AddShipment = () => {
               id="products"
               placeholder="اكتب وصف المنتجات المشحونة..."
               rows={3}
+              value={formData.product_name}
+              onChange={(e) => handleChange("product_name", e.target.value)}
               required
             />
           </div>
@@ -154,7 +202,8 @@ const AddShipment = () => {
                 id="quantity"
                 type="number"
                 min="1"
-                defaultValue="1"
+                value={formData.quantity}
+                onChange={(e) => handleChange("quantity", e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -164,6 +213,8 @@ const AddShipment = () => {
                 type="number"
                 step="0.1"
                 placeholder="0.0"
+                value={formData.weight}
+                onChange={(e) => handleChange("weight", e.target.value)}
               />
             </div>
           </div>
@@ -176,12 +227,17 @@ const AddShipment = () => {
                 type="number"
                 min="0"
                 placeholder="0"
+                value={formData.cod_amount}
+                onChange={(e) => handleChange("cod_amount", e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="paymentType">طريقة الدفع *</Label>
-              <Select required>
+              <Select 
+                value={formData.payment_type}
+                onValueChange={(value) => handleChange("payment_type", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="اختر طريقة الدفع" />
                 </SelectTrigger>
@@ -195,15 +251,39 @@ const AddShipment = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="delegate">المندوب</Label>
-            <Select>
+            <Label htmlFor="shipper">التاجر</Label>
+            <Select 
+              value={formData.shipper_id}
+              onValueChange={(value) => handleChange("shipper_id", value)}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="اختر المندوب (اختياري)" />
+                <SelectValue placeholder={loadingShippers ? "جاري التحميل..." : "اختر التاجر (اختياري)"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ahmed">أحمد محمد</SelectItem>
-                <SelectItem value="khalid">خالد سعيد</SelectItem>
-                <SelectItem value="omar">عمر علي</SelectItem>
+                {shippers?.map((shipper) => (
+                  <SelectItem key={shipper.id} value={shipper.id}>
+                    {shipper.name} {shipper.city && `- ${shipper.city}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="delegate">المندوب</Label>
+            <Select 
+              value={formData.delegate_id}
+              onValueChange={(value) => handleChange("delegate_id", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={loadingDelegates ? "جاري التحميل..." : "اختر المندوب (اختياري)"} />
+              </SelectTrigger>
+              <SelectContent>
+                {delegates?.map((delegate) => (
+                  <SelectItem key={delegate.id} value={delegate.id}>
+                    {delegate.name} {delegate.city && `- ${delegate.city}`}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -222,6 +302,8 @@ const AddShipment = () => {
               id="notes"
               placeholder="أي ملاحظات إضافية للمندوب..."
               rows={3}
+              value={formData.notes}
+              onChange={(e) => handleChange("notes", e.target.value)}
             />
           </div>
 
@@ -247,16 +329,16 @@ const AddShipment = () => {
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">رسوم الشحن</span>
-                <span>25 ر.س</span>
+                <span>{shippingFee.toFixed(2)} ر.س</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">الضريبة</span>
-                <span>3.75 ر.س</span>
+                <span className="text-muted-foreground">الضريبة (15%)</span>
+                <span>{tax.toFixed(2)} ر.س</span>
               </div>
               <div className="border-t border-border pt-2 mt-2">
                 <div className="flex justify-between font-semibold">
                   <span>الإجمالي</span>
-                  <span className="text-primary">28.75 ر.س</span>
+                  <span className="text-primary">{total.toFixed(2)} ر.س</span>
                 </div>
               </div>
             </div>
@@ -274,9 +356,16 @@ const AddShipment = () => {
             <Button
               type="submit"
               className="flex-1 bg-accent hover:bg-accent/90"
-              disabled={isSubmitting}
+              disabled={createShipment.isPending}
             >
-              {isSubmitting ? "جاري الحفظ..." : "حفظ الشحنة"}
+              {createShipment.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  جاري الحفظ...
+                </>
+              ) : (
+                "حفظ الشحنة"
+              )}
             </Button>
           </div>
         </div>

@@ -22,6 +22,7 @@ import PaymentDocuments from "./pages/PaymentDocuments";
 import ShippersManagement from "./pages/ShippersManagement";
 import DelegatesManagement from "./pages/DelegatesManagement";
 import DelegateStats from "./pages/DelegateStats";
+import TrackShipment from "./pages/TrackShipment";
 import Auth from "./pages/Auth";
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
@@ -41,6 +42,7 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/guest" element={<GuestOrders />} />
+              <Route path="/track/:trackingNumber" element={<TrackShipment />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
               {/* Protected Routes */}
