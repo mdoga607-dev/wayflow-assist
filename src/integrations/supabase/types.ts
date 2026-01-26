@@ -105,8 +105,12 @@ export type Database = {
         Row: {
           cod_amount: number | null
           created_at: string
+          current_lat: number | null
+          current_lng: number | null
           delegate_id: string | null
           delivered_at: string | null
+          destination_lat: number | null
+          destination_lng: number | null
           id: string
           notes: string | null
           product_name: string | null
@@ -127,8 +131,12 @@ export type Database = {
         Insert: {
           cod_amount?: number | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
           delegate_id?: string | null
           delivered_at?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
           id?: string
           notes?: string | null
           product_name?: string | null
@@ -149,8 +157,12 @@ export type Database = {
         Update: {
           cod_amount?: number | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
           delegate_id?: string | null
           delivered_at?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
           id?: string
           notes?: string | null
           product_name?: string | null
