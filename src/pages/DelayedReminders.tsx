@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
 const DelayedReminders = () => {
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   // Mock data for delayed shipments
   const delayedShipments = [
@@ -63,7 +63,7 @@ const DelayedReminders = () => {
               <p>
                 التاريخ المختار:{" "}
                 <span className="font-medium">
-                  {format(date, "PPPP", { locale: ar })}
+                  {date ? format(date, "PPPP", { locale: ar }) : "لم يتم التحديد"}
                 </span>
               </p>
               <p className="text-muted-foreground">
