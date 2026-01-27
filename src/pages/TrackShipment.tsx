@@ -1,4 +1,4 @@
-gimport { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import { Icon } from "leaflet";
@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
-import { useState } from "react";
 
 const statusLabels: Record<string, string> = {
   pending: "في الانتظار",
@@ -139,14 +138,24 @@ const TrackShipment = () => {
   // Default coordinates for Saudi Arabia (Riyadh)
   const defaultCenter: [number, number] = [24.7136, 46.6753];
   const origin: [number, number] = [24.7136, 46.6753]; // Warehouse location
+  
+  // Handle null coordinates safely
   const current: [number, number] = shipment.current_lat && shipment.current_lng 
     ? [shipment.current_lat, shipment.current_lng] 
     : origin;
+    
   const destination: [number, number] = shipment.destination_lat && shipment.destination_lng 
     ? [shipment.destination_lat, shipment.destination_lng] 
     : [24.7500, 46.7200];
 
   const mapCenter = shipment.current_lat && shipment.current_lng ? current : defaultCenter;
+
+  // Route coordinates for Polyline (only if we have valid coordinates)
+  const routeCoordinates = [origin];
+  if (shipment.current_lat && shipment.current_lng) {
+    routeCoordinates.push(current);
+  }
+  routeCoordinates.push(destination);
 
   return (
     <div className="space-y-6">
@@ -271,7 +280,7 @@ const TrackShipment = () => {
 
                 {/* Route line */}
                 <Polyline
-                  positions={[origin, current, destination]}
+                  positions={routeCoordinates}
                   color="#3b82f6"
                   weight={3}
                   opacity={0.7}
