@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, Printer, CheckSquare, Link } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Search, Filter, Download, Plus, Eye, Edit, Trash2, Printer, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,24 +11,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-
-const shipments = [
-  { id: "SHP-001", customer: "محمد أحمد", phone: "0512345678", city: "الرياض", address: "حي النخيل، شارع العليا", status: "delivered", date: "2024-01-15", amount: 250 },
-  { id: "SHP-002", customer: "فاطمة علي", phone: "0523456789", city: "جدة", address: "حي الروضة، شارع الملك فهد", status: "transit", date: "2024-01-15", amount: 180 },
-  { id: "SHP-003", customer: "عبدالله سعيد", phone: "0534567890", city: "الدمام", address: "حي الفيصلية، شارع الأمير محمد", status: "pending", date: "2024-01-14", amount: 320 },
-  { id: "SHP-004", customer: "نورة خالد", phone: "0545678901", city: "مكة", address: "حي العزيزية، شارع إبراهيم الخليل", status: "delayed", date: "2024-01-14", amount: 150 },
-  { id: "SHP-005", customer: "سارة محمد", phone: "0556789012", city: "المدينة", address: "حي السلام، شارع السلام", status: "delivered", date: "2024-01-13", amount: 420 },
-  { id: "SHP-006", customer: "أحمد خالد", phone: "0567890123", city: "الرياض", address: "حي الملز، شارع الستين", status: "transit", date: "2024-01-13", amount: 280 },
-  { id: "SHP-007", customer: "مريم سعد", phone: "0578901234", city: "جدة", address: "حي الحمراء، شارع التحلية", status: "pending", date: "2024-01-12", amount: 195 },
-  { id: "SHP-008", customer: "يوسف علي", phone: "0589012345", city: "الدمام", address: "حي الشاطئ، الكورنيش", status: "delivered", date: "2024-01-12", amount: 510 },
-];
+import { useShipments, useUpdateShipmentStatus, useDeleteShipment } from "@/hooks/useShipments";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const statusLabels: Record<string, string> = {
   delivered: "تم التسليم",
   transit: "قيد التوصيل",
   pending: "في الانتظار",
   delayed: "متأخر",
+  returned: "مرتجع",
 };
 
 const Shipments = () => {
@@ -35,6 +47,33 @@ const Shipments = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
   const [selectedShipments, setSelectedShipments] = useState<string[]>([]);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedShipment, setSelectedShipment] = useState<any>(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [sendSMS, setSendSMS] = useState(true);
+
+  const { data: shipments = [], isLoading, refetch } = useShipments();
+  const updateStatus = useUpdateShipmentStatus();
+  const deleteShipment = useDeleteShipment();
+
+  // Real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel("shipments-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shipments" },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   const handleSelectShipment = (id: string, checked: boolean) => {
     if (checked) {
@@ -58,18 +97,63 @@ const Shipments = () => {
       return;
     }
     console.log("طباعة الشحنات:", selectedShipments);
-    // Implement print logic
+  };
+
+  const openEditDialog = (shipment: any) => {
+    setSelectedShipment(shipment);
+    setNewStatus(shipment.status || "pending");
+    setEditDialogOpen(true);
+  };
+
+  const openDeleteDialog = (shipment: any) => {
+    setSelectedShipment(shipment);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleStatusUpdate = async () => {
+    if (selectedShipment && newStatus) {
+      await updateStatus.mutateAsync({
+        shipmentId: selectedShipment.id,
+        newStatus,
+        sendSMS,
+      });
+      setEditDialogOpen(false);
+      setSelectedShipment(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedShipment) {
+      await deleteShipment.mutateAsync(selectedShipment.id);
+      setDeleteDialogOpen(false);
+      setSelectedShipment(null);
+    }
   };
 
   const filteredShipments = shipments.filter((shipment) => {
     const matchesSearch =
-      shipment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      shipment.customer.includes(searchQuery) ||
-      shipment.phone.includes(searchQuery);
+      shipment.tracking_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      shipment.recipient_name.includes(searchQuery) ||
+      shipment.recipient_phone.includes(searchQuery);
     const matchesStatus = statusFilter === "all" || shipment.status === statusFilter;
-    const matchesCity = cityFilter === "all" || shipment.city === cityFilter;
+    const matchesCity = cityFilter === "all" || shipment.recipient_city === cityFilter;
     return matchesSearch && matchesStatus && matchesCity;
   });
+
+  const cities = [...new Set(shipments.map(s => s.recipient_city).filter(Boolean))];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -118,6 +202,7 @@ const Shipments = () => {
               <SelectItem value="transit">قيد التوصيل</SelectItem>
               <SelectItem value="pending">في الانتظار</SelectItem>
               <SelectItem value="delayed">متأخر</SelectItem>
+              <SelectItem value="returned">مرتجع</SelectItem>
             </SelectContent>
           </Select>
           <Select value={cityFilter} onValueChange={setCityFilter}>
@@ -126,11 +211,9 @@ const Shipments = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">جميع المدن</SelectItem>
-              <SelectItem value="الرياض">الرياض</SelectItem>
-              <SelectItem value="جدة">جدة</SelectItem>
-              <SelectItem value="الدمام">الدمام</SelectItem>
-              <SelectItem value="مكة">مكة</SelectItem>
-              <SelectItem value="المدينة">المدينة</SelectItem>
+              {cities.map(city => (
+                <SelectItem key={city} value={city!}>{city}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -151,9 +234,9 @@ const Shipments = () => {
                 <th>العميل</th>
                 <th>الهاتف</th>
                 <th>المدينة</th>
-                <th>العنوان</th>
+                <th>التاجر</th>
+                <th>المندوب</th>
                 <th>الحالة</th>
-                <th>التاريخ</th>
                 <th>المبلغ</th>
                 <th>إجراءات</th>
               </tr>
@@ -171,27 +254,43 @@ const Shipments = () => {
                       onCheckedChange={(checked) => handleSelectShipment(shipment.id, checked as boolean)}
                     />
                   </td>
-                  <td className="font-medium text-primary">{shipment.id}</td>
-                  <td className="font-medium">{shipment.customer}</td>
-                  <td dir="ltr" className="text-right">{shipment.phone}</td>
-                  <td>{shipment.city}</td>
-                  <td className="max-w-[200px] truncate">{shipment.address}</td>
+                  <td>
+                    <Link to={`/track/${shipment.tracking_number}`} className="font-medium text-primary hover:underline">
+                      {shipment.tracking_number}
+                    </Link>
+                  </td>
+                  <td className="font-medium">{shipment.recipient_name}</td>
+                  <td dir="ltr" className="text-right">{shipment.recipient_phone}</td>
+                  <td>{shipment.recipient_city || "-"}</td>
+                  <td>{shipment.shippers?.name || "-"}</td>
+                  <td>{shipment.delegates?.name || "-"}</td>
                   <td>
                     <span className={cn("status-badge", `status-${shipment.status}`)}>
-                      {statusLabels[shipment.status]}
+                      {statusLabels[shipment.status || "pending"]}
                     </span>
                   </td>
-                  <td>{shipment.date}</td>
-                  <td className="font-semibold">{shipment.amount} ر.س</td>
+                  <td className="font-semibold">{shipment.cod_amount || 0} ر.س</td>
                   <td>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-accent hover:text-accent">
+                      <Link to={`/track/${shipment.tracking_number}`}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-accent hover:text-accent"
+                        onClick={() => openEditDialog(shipment)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => openDeleteDialog(shipment)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -205,25 +304,77 @@ const Shipments = () => {
           <p className="text-sm text-muted-foreground">
             عرض {filteredShipments.length} من {shipments.length} شحنة
           </p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled>
-              السابق
-            </Button>
-            <Button variant="outline" size="sm" className="bg-primary text-primary-foreground">
-              1
-            </Button>
-            <Button variant="outline" size="sm">
-              2
-            </Button>
-            <Button variant="outline" size="sm">
-              3
-            </Button>
-            <Button variant="outline" size="sm">
-              التالي
-            </Button>
-          </div>
         </div>
       </div>
+
+      {/* Edit Status Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>تعديل حالة الشحنة</DialogTitle>
+            <DialogDescription>
+              تحديث حالة الشحنة {selectedShipment?.tracking_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">الحالة الجديدة</label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر الحالة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">في الانتظار</SelectItem>
+                  <SelectItem value="transit">قيد التوصيل</SelectItem>
+                  <SelectItem value="delivered">تم التسليم</SelectItem>
+                  <SelectItem value="delayed">متأخر</SelectItem>
+                  <SelectItem value="returned">مرتجع</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="sendSMS" 
+                checked={sendSMS} 
+                onCheckedChange={(checked) => setSendSMS(checked as boolean)} 
+              />
+              <label htmlFor="sendSMS" className="text-sm flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                إرسال إشعار SMS للعميل
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleStatusUpdate} disabled={updateStatus.isPending}>
+              {updateStatus.isPending ? "جاري التحديث..." : "تحديث الحالة"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف الشحنة {selectedShipment?.tracking_number} نهائياً. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteShipment.isPending ? "جاري الحذف..." : "حذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
