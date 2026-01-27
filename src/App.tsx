@@ -27,6 +27,11 @@ import Auth from "./pages/Auth";
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
+import AdminUserManagement from "./pages/AdminUserManagement";
+import TrackDelegates from "./pages/TrackDelegates";
+import DelayedReminders from "./pages/DelayedReminders";
+import PickupRequests from "./pages/PickupRequests";
+import DelegateDetails from "./pages/DelegateDetails";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +52,7 @@ const App = () => (
 
               {/* Protected Routes */}
               <Route
+                path="/"
                 element={
                   <ProtectedRoute>
                     <MainLayout />
@@ -68,8 +74,19 @@ const App = () => (
                 <Route path="/shippers" element={<ShippersManagement />} />
                 <Route path="/delegates" element={<DelegatesManagement />} />
                 <Route path="/delegate-stats" element={<DelegateStats />} />
+                <Route path="/admin-users" element={
+                  <ProtectedRoute allowedRoles={['head_manager']}>
+                    <AdminUserManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/track-delegates" element={<TrackDelegates />} />
+                <Route path="/delayed-reminders" element={<DelayedReminders />} />
+                <Route path="/pickup-requests" element={<PickupRequests />} />
+                <Route path="/delegate/:id" element={<DelegateDetails />} />
+                <Route path="/verify-otp" element={<Auth />} />
+                <Route path="/profile" element={<Auth />} />
+                
               </Route>
-
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

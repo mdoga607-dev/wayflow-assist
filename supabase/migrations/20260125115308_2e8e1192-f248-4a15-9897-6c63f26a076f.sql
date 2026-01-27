@@ -56,7 +56,7 @@ AS $$
   LIMIT 1
 $$;
 
--- RLS Policies for profiles
+-- RLS Policies for profiles (without aal for basic access)
 CREATE POLICY "Users can view their own profile"
 ON public.profiles FOR SELECT
 USING (auth.uid() = user_id);
@@ -73,7 +73,7 @@ CREATE POLICY "Users can insert their own profile"
 ON public.profiles FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
--- RLS Policies for user_roles
+-- RLS Policies for user_roles (without aal)
 CREATE POLICY "Users can view their own role"
 ON public.user_roles FOR SELECT
 USING (auth.uid() = user_id);
@@ -121,3 +121,21 @@ CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Add the delete_unconfirmed_users function
+CREATE OR REPLACE FUNCTION delete_unconfirmed_users()
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  deleted_count INTEGER;
+BEGIN
+  DELETE FROM auth.users
+  WHERE created_at < NOW() - INTERVAL '24 hours'
+    AND email_confirmed_at IS NULL;
+  
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$;

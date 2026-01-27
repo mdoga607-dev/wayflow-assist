@@ -1,50 +1,66 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, User, Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Package, User, Lock, Mail, Phone, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const parseJwt = (token: string) => {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(window.atob(base64).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  return JSON.parse(jsonPayload);
+};
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Login form state
+  // Login State
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
-  // Signup form state
+  // Signup State
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
+  const [signupPhone, setSignupPhone] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(loginEmail, loginPassword);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
 
     if (error) {
       toast({
-        title: "خطأ في تسجيل الدخول",
-        description: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-        variant: "destructive",
+        title: "خطأ في الدخول",
+        description: error.message === "Email not confirmed"
+          ? "يرجى تأكيد البريد الإلكتروني أولاً"
+          : "البيانات غير صحيحة",
+        variant: "destructive"
       });
-    } else {
-      toast({
-        title: "تم تسجيل الدخول بنجاح",
-        description: "مرحباً بك في النظام",
-      });
-      navigate("/");
+      setIsLoading(false);
+      return;
     }
 
+    if (data.user && !data.user.confirmed_at) {
+      toast({ title: "تأكيد مطلوب", description: "يرجى تأكيد البريد الإلكتروني أولاً" });
+      setIsLoading(false);
+      return;
+    }
+
+    toast({ title: "مرحباً بك", description: "تم تسجيل الدخول بنجاح" });
+    navigate("/");
     setIsLoading(false);
   };
 
@@ -52,189 +68,86 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (signupPassword.length < 6) {
-      toast({
-        title: "خطأ",
-        description: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    const { error } = await signUp(signupEmail, signupPassword, signupFullName);
+    const { data, error } = await supabase.auth.signUp({
+      email: signupEmail,
+      password: signupPassword,
+      options: {
+        data: { full_name: signupFullName, phone: signupPhone },
+      },
+    });
 
     if (error) {
-      toast({
-        title: "خطأ في إنشاء الحساب",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
     } else {
       toast({
-        title: "تم إنشاء الحساب بنجاح",
-        description: "يمكنك الآن تسجيل الدخول",
+        title: "تفقد بريدك الإلكتروني",
+        description: "أرسلنا رابط تفعيل لبريدك الإلكتروني، يرجى الضغط عليه لتفعيل الحساب",
       });
-      navigate("/");
+      if (data.user && !data.user.confirmed_at) {
+        toast({ title: "تأكيد مطلوب", description: "يرجى تأكيد البريد قبل الدخول" });
+      }
     }
-
     setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-md">
-        {/* Logo and Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-            <Package className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">نظام إدارة الشحنات</h1>
-          <p className="text-muted-foreground mt-2">مرحباً بك في نظام إدارة الشحنات والمبيعات</p>
+        <div className="text-center mb-6">
+          <Package className="w-12 h-12 text-primary mx-auto mb-2" />
+          <h1 className="text-2xl font-bold">نظام الشحنات</h1>
         </div>
 
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="text-center pb-4">
-            <CardTitle>الدخول إلى النظام</CardTitle>
-            <CardDescription>قم بتسجيل الدخول أو إنشاء حساب جديد</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card className="shadow-2xl border-0">
+          <CardContent className="pt-6">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-2 mb-8">
                 <TabsTrigger value="login">تسجيل الدخول</TabsTrigger>
                 <TabsTrigger value="signup">حساب جديد</TabsTrigger>
               </TabsList>
 
-              {/* Login Tab */}
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">البريد الإلكتروني</Label>
-                    <div className="relative">
-                      <Mail className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="example@email.com"
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        className="pr-10"
-                        required
-                        dir="ltr"
-                      />
-                    </div>
+                    <Label>البريد الإلكتروني</Label>
+                    <Input type="email" placeholder="mail@example.com" dir="ltr" value={loginEmail} onChange={(e)=>setLoginEmail(e.target.value)} required />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">كلمة المرور</Label>
-                    <div className="relative">
-                      <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="login-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        className="pr-10 pl-10"
-                        required
-                        dir="ltr"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute left-3 top-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
+                    <Label>كلمة المرور</Label>
+                    <Input type="password" placeholder="••••••••" dir="ltr" value={loginPassword} onChange={(e)=>setLoginPassword(e.target.value)} required />
                   </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "جاري التحميل..." : "تسجيل الدخول"}
+                  <Button className="w-full" disabled={isLoading}>
+                    {isLoading ? "جاري الدخول..." : "دخول"}
                   </Button>
                 </form>
               </TabsContent>
 
-              {/* Signup Tab */}
               <TabsContent value="signup">
                 <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">الاسم الكامل</Label>
-                    <div className="relative">
-                      <User className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="أحمد محمد"
-                        value={signupFullName}
-                        onChange={(e) => setSignupFullName(e.target.value)}
-                        className="pr-10"
-                        required
-                      />
-                    </div>
+                  <div className="space-y-2 text-right">
+                    <Label>الاسم الكامل</Label>
+                    <Input placeholder="أحمد محمد" value={signupFullName} onChange={(e)=>setSignupFullName(e.target.value)} required />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">البريد الإلكتروني</Label>
-                    <div className="relative">
-                      <Mail className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="example@email.com"
-                        value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        className="pr-10"
-                        required
-                        dir="ltr"
-                      />
-                    </div>
+                    <Label>البريد الإلكتروني</Label>
+                    <Input type="email" dir="ltr" value={signupEmail} onChange={(e)=>setSignupEmail(e.target.value)} required />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">كلمة المرور</Label>
-                    <div className="relative">
-                      <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        className="pr-10 pl-10"
-                        required
-                        minLength={6}
-                        dir="ltr"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute left-3 top-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">يجب أن تكون 6 أحرف على الأقل</p>
+                    <Label>رقم الهاتف (كود الدولة + الرقم)</Label>
+                    <Input type="tel" placeholder="+2010..." dir="ltr" value={signupPhone} onChange={(e)=>setSignupPhone(e.target.value)} required />
                   </div>
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "جاري التحميل..." : "إنشاء حساب"}
+                  <div className="space-y-2">
+                    <Label>كلمة المرور</Label>
+                    <Input type="password" dir="ltr" value={signupPassword} onChange={(e)=>setSignupPassword(e.target.value)} required />
+                  </div>
+                  <Button className="w-full" disabled={isLoading}>
+                    {isLoading ? "جاري المعالجة..." : "إنشاء الحساب وتفعيل البريد"}
                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
-
-        {/* Guest Access */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-muted-foreground">
-            هل أنت زائر؟{" "}
-            <a href="/guest" className="text-primary hover:underline font-medium">
-              تصفح الأوردرات
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );

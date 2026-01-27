@@ -67,33 +67,33 @@ ALTER TABLE public.shipments ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for shippers
 CREATE POLICY "Head managers can manage shippers"
   ON public.shippers FOR ALL
-  USING (has_role(auth.uid(), 'head_manager'));
+  USING (has_role(auth.uid(), 'head_manager') AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 CREATE POLICY "Users can view shippers"
   ON public.shippers FOR SELECT
-  USING (auth.uid() IS NOT NULL);
+  USING (auth.uid() IS NOT NULL AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 -- RLS Policies for delegates
 CREATE POLICY "Head managers can manage delegates"
   ON public.delegates FOR ALL
-  USING (has_role(auth.uid(), 'head_manager'));
+  USING (has_role(auth.uid(), 'head_manager') AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 CREATE POLICY "Users can view delegates"
   ON public.delegates FOR SELECT
-  USING (auth.uid() IS NOT NULL);
+  USING (auth.uid() IS NOT NULL AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 CREATE POLICY "Delegates can view own record"
   ON public.delegates FOR SELECT
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid() AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 -- RLS Policies for shipments
 CREATE POLICY "Head managers can manage all shipments"
   ON public.shipments FOR ALL
-  USING (has_role(auth.uid(), 'head_manager'));
+  USING (has_role(auth.uid(), 'head_manager') AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 CREATE POLICY "Users can view shipments"
   ON public.shipments FOR SELECT
-  USING (auth.uid() IS NOT NULL);
+  USING (auth.uid() IS NOT NULL AND (auth.jwt() ->> 'aal' = 'aal2'));
 
 CREATE POLICY "Guests can view shipments by tracking number"
   ON public.shipments FOR SELECT

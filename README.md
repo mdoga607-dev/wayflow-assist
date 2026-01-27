@@ -1,3 +1,44 @@
+# نظام الشحنات - WayFlow Assist
+
+نظام إدارة الشحنات والمندوبين مع تأكيد البريد الإلكتروني.
+
+## إعداد البريد الإلكتروني
+
+لتشغيل نظام تأكيد البريد الإلكتروني، تحتاج لتعديل ملف `supabase/config.toml`:
+
+```toml
+[auth.email]
+enable_confirmations = true
+smtp_host = "smtp.gmail.com"
+smtp_port = 587
+smtp_user = "your-email@gmail.com"  # ضع بريدك الإلكتروني هنا
+smtp_pass = "your-app-password"    # استخدم App Password من جوجل
+smtp_admin_email = "admin@yourdomain.com"
+smtp_sender_name = "نظام الشحنات"
+```
+
+### كيفية إنشاء App Password لجوجل:
+
+1. اذهب إلى [Google Account Settings](https://myaccount.google.com/)
+2. فعل Two-Factor Authentication
+3. اذهب إلى Security > App passwords
+4. أنشئ كلمة مرور جديدة للتطبيق
+5. استخدم هذه الكلمة المرور في `smtp_pass`
+
+## المميزات
+
+- ✅ تسجيل دخول آمن مع تأكيد البريد الإلكتروني
+- ✅ حذف تلقائي للمستخدمين غير المؤكدين (أكثر من 24 ساعة)
+- ✅ إدارة الشحنات والمندوبين
+- ✅ لوحة تحكم شاملة
+
+## إدارة المستخدمين
+
+يمكن للمدير حذف المستخدمين غير المؤكدين من خلال:
+
+- الذهاب إلى `/admin-users`
+- الضغط على زر "حذف المستخدمين غير المؤكدين"
+
 # Welcome to your Lovable project
 
 ## Project info

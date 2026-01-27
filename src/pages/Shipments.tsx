@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Filter, Download, Plus, Eye, Edit, Trash2, Printer, CheckSquare, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,8 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
 
 const shipments = [
   { id: "SHP-001", customer: "محمد أحمد", phone: "0512345678", city: "الرياض", address: "حي النخيل، شارع العليا", status: "delivered", date: "2024-01-15", amount: 250 },
@@ -34,6 +34,32 @@ const Shipments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
+  const [selectedShipments, setSelectedShipments] = useState<string[]>([]);
+
+  const handleSelectShipment = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedShipments(prev => [...prev, id]);
+    } else {
+      setSelectedShipments(prev => prev.filter(s => s !== id));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedShipments(filteredShipments.map(s => s.id));
+    } else {
+      setSelectedShipments([]);
+    }
+  };
+
+  const handleBulkPrint = () => {
+    if (selectedShipments.length === 0) {
+      alert("برجاء اختيار شحنات للطباعة");
+      return;
+    }
+    console.log("طباعة الشحنات:", selectedShipments);
+    // Implement print logic
+  };
 
   const filteredShipments = shipments.filter((shipment) => {
     const matchesSearch =
@@ -53,6 +79,10 @@ const Shipments = () => {
           <p className="text-muted-foreground">إدارة وتتبع جميع الشحنات</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleBulkPrint} disabled={selectedShipments.length === 0}>
+            <Printer className="h-4 w-4" />
+            طباعة ({selectedShipments.length})
+          </Button>
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             تصدير
@@ -111,6 +141,12 @@ const Shipments = () => {
           <table className="data-table">
             <thead>
               <tr>
+                <th>
+                  <Checkbox
+                    checked={selectedShipments.length === filteredShipments.length && filteredShipments.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </th>
                 <th>رقم الشحنة</th>
                 <th>العميل</th>
                 <th>الهاتف</th>
@@ -129,6 +165,12 @@ const Shipments = () => {
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
+                  <td>
+                    <Checkbox
+                      checked={selectedShipments.includes(shipment.id)}
+                      onCheckedChange={(checked) => handleSelectShipment(shipment.id, checked as boolean)}
+                    />
+                  </td>
                   <td className="font-medium text-primary">{shipment.id}</td>
                   <td className="font-medium">{shipment.customer}</td>
                   <td dir="ltr" className="text-right">{shipment.phone}</td>

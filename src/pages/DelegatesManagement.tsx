@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,7 @@ import {
   Package,
   CheckCircle,
   Clock,
+  Eye,
 } from "lucide-react";
 
 interface Delegate {
@@ -514,6 +516,11 @@ const DelegatesManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
+                          <Link to={`/delegate/${delegate.id}`}>
+                            <Button variant="ghost" size="icon">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Dialog
                             open={editingDelegate?.id === delegate.id}
                             onOpenChange={(open) => !open && setEditingDelegate(null)}
