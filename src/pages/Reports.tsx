@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,71 +16,46 @@ import {
 } from "@/components/ui/table";
 import {
   FileText,
-  Download,
   FileSpreadsheet,
   Calendar as CalendarIcon,
-  Filter,
   TrendingUp,
   TrendingDown,
   DollarSign,
   Users,
   Printer,
+  Package,
+  Truck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
+  CartesianGrid, Tooltip, Legend, LineChart, Line, Area, AreaChart 
+} from "recharts";
+import { useReportsData } from "@/hooks/useReportsData";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Demo data for collection reports
-const collectionReports = [
-  { id: 1, date: "2024-01-20", amount: 5200, collector: "أحمد محمد", customer: "شركة النور", status: "مكتمل", notes: "دفعة كاملة" },
-  { id: 2, date: "2024-01-19", amount: 3500, collector: "محمد علي", customer: "مؤسسة الفجر", status: "مكتمل", notes: "دفعة جزئية" },
-  { id: 3, date: "2024-01-18", amount: 8900, collector: "أحمد محمد", customer: "شركة البركة", status: "معلق", notes: "في انتظار التحويل" },
-  { id: 4, date: "2024-01-17", amount: 2100, collector: "سامي أحمد", customer: "متجر السلام", status: "مكتمل", notes: "" },
-  { id: 5, date: "2024-01-16", amount: 6700, collector: "محمد علي", customer: "شركة الأمل", status: "مكتمل", notes: "دفعة نقدية" },
-];
-
-// Demo data for payment reports
-const paymentReports = [
-  { id: 1, date: "2024-01-20", amount: 4500, payer: "أحمد محمد", type: "نقدي", notes: "راتب المندوب", status: "مكتمل" },
-  { id: 2, date: "2024-01-19", amount: 2000, payer: "الإدارة", type: "تحويل", notes: "مصاريف نقل", status: "مكتمل" },
-  { id: 3, date: "2024-01-18", amount: 1500, payer: "محمد علي", type: "نقدي", notes: "عمولة", status: "معلق" },
-  { id: 4, date: "2024-01-17", amount: 3200, payer: "الإدارة", type: "شيك", notes: "فواتير", status: "مكتمل" },
-  { id: 5, date: "2024-01-16", amount: 800, payer: "سامي أحمد", type: "نقدي", notes: "بدل انتقال", status: "مكتمل" },
-];
-
-// Chart data
-const monthlyData = [
-  { name: "يناير", collection: 45000, payment: 32000 },
-  { name: "فبراير", collection: 52000, payment: 38000 },
-  { name: "مارس", collection: 48000, payment: 35000 },
-  { name: "أبريل", collection: 61000, payment: 42000 },
-  { name: "مايو", collection: 55000, payment: 40000 },
-  { name: "يونيو", collection: 67000, payment: 45000 },
-];
-
-const statusData = [
-  { name: "مكتمل", value: 75, color: "#10b981" },
-  { name: "معلق", value: 15, color: "#f59e0b" },
-  { name: "ملغي", value: 10, color: "#ef4444" },
-];
+const statusColors: Record<string, string> = {
+  delivered: "#10b981",
+  pending: "#f59e0b",
+  transit: "#3b82f6",
+  delayed: "#ef4444",
+  returned: "#8b5cf6",
+};
 
 const Reports = () => {
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
   const [statusFilter, setStatusFilter] = useState("all");
-  const [collectorFilter, setCollectorFilter] = useState("all");
 
-  const totalCollection = collectionReports.reduce((sum, r) => sum + r.amount, 0);
-  const totalPayment = paymentReports.reduce((sum, r) => sum + r.amount, 0);
+  const { data, isLoading } = useReportsData();
 
   const handleExportExcel = (type: string) => {
-    // Simulate Excel export
     console.log(`Exporting ${type} to Excel...`);
   };
 
   const handleExportPDF = (type: string) => {
-    // Simulate PDF export
     console.log(`Exporting ${type} to PDF...`);
   };
 
@@ -90,13 +63,39 @@ const Reports = () => {
     window.print();
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+  }
+
+  const { stats, monthlyData, delegateReports } = data || {
+    stats: { totalRevenue: 0, totalCommissions: 0, totalShipments: 0, deliveredCount: 0, pendingCount: 0, delayedCount: 0, returnedCount: 0, transitCount: 0 },
+    monthlyData: [],
+    delegateReports: [],
+  };
+
+  const statusData = [
+    { name: "تم التسليم", value: stats.deliveredCount, color: statusColors.delivered },
+    { name: "في الانتظار", value: stats.pendingCount, color: statusColors.pending },
+    { name: "قيد التوصيل", value: stats.transitCount, color: statusColors.transit },
+    { name: "متأخر", value: stats.delayedCount, color: statusColors.delayed },
+    { name: "مرتجع", value: stats.returnedCount, color: statusColors.returned },
+  ].filter(s => s.value > 0);
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">التقارير</h1>
-          <p className="text-muted-foreground">تقارير الجمع والدفع مع إمكانية التصدير</p>
+          <h1 className="text-2xl font-bold">التقارير والإحصائيات</h1>
+          <p className="text-muted-foreground">تقارير شاملة للإيرادات والعمولات والشحنات</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handlePrint}>
@@ -107,39 +106,15 @@ const Reports = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">إجمالي الجمع</p>
-                <p className="text-2xl font-bold">{totalCollection.toLocaleString()} ج.م</p>
+                <p className="text-sm opacity-80">إجمالي الإيرادات</p>
+                <p className="text-2xl font-bold">{stats.totalRevenue.toLocaleString()} ر.س</p>
               </div>
               <TrendingUp className="w-8 h-8 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">إجمالي الدفع</p>
-                <p className="text-2xl font-bold">{totalPayment.toLocaleString()} ج.م</p>
-              </div>
-              <TrendingDown className="w-8 h-8 opacity-80" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">صافي الرصيد</p>
-                <p className="text-2xl font-bold">{(totalCollection - totalPayment).toLocaleString()} ج.م</p>
-              </div>
-              <DollarSign className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
@@ -148,10 +123,38 @@ const Reports = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">عدد العمليات</p>
-                <p className="text-2xl font-bold">{collectionReports.length + paymentReports.length}</p>
+                <p className="text-sm opacity-80">إجمالي العمولات</p>
+                <p className="text-2xl font-bold">{stats.totalCommissions.toLocaleString()} ر.س</p>
               </div>
-              <Users className="w-8 h-8 opacity-80" />
+              <DollarSign className="w-8 h-8 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">إجمالي الشحنات</p>
+                <p className="text-2xl font-bold">{stats.totalShipments}</p>
+              </div>
+              <Package className="w-8 h-8 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">نسبة التسليم</p>
+                <p className="text-2xl font-bold">
+                  {stats.totalShipments > 0 
+                    ? Math.round((stats.deliveredCount / stats.totalShipments) * 100) 
+                    : 0}%
+                </p>
+              </div>
+              <Truck className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
@@ -159,28 +162,40 @@ const Reports = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Monthly Revenue Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>مقارنة الجمع والدفع الشهرية</CardTitle>
+            <CardTitle>الإيرادات والعمولات الشهرية</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorCommissions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value: number) => `${value.toLocaleString()} ر.س`} />
                 <Legend />
-                <Bar dataKey="collection" name="الجمع" fill="#10b981" />
-                <Bar dataKey="payment" name="الدفع" fill="#ef4444" />
-              </BarChart>
+                <Area type="monotone" dataKey="revenue" name="الإيرادات" stroke="#10b981" fillOpacity={1} fill="url(#colorRevenue)" />
+                <Area type="monotone" dataKey="commissions" name="العمولات" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorCommissions)" />
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
+        {/* Status Distribution Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>حالة العمليات</CardTitle>
+            <CardTitle>توزيع حالات الشحنات</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -206,180 +221,86 @@ const Reports = () => {
         </Card>
       </div>
 
-      {/* Reports Tabs */}
+      {/* Delegate Performance */}
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle>تفاصيل التقارير</CardTitle>
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <CalendarIcon className="w-4 h-4 ml-2" />
-                    {dateFrom ? format(dateFrom, "yyyy/MM/dd") : "من تاريخ"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <CalendarIcon className="w-4 h-4 ml-2" />
-                    {dateTo ? format(dateTo, "yyyy/MM/dd") : "إلى تاريخ"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="الحالة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">الكل</SelectItem>
-                  <SelectItem value="completed">مكتمل</SelectItem>
-                  <SelectItem value="pending">معلق</SelectItem>
-                  <SelectItem value="cancelled">ملغي</SelectItem>
-                </SelectContent>
-              </Select>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              أداء المناديب والعمولات
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExportExcel("delegates")}>
+                <FileSpreadsheet className="w-4 h-4 ml-2" />
+                تصدير Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExportPDF("delegates")}>
+                <FileText className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="collection" className="w-full">
-            <div className="flex items-center justify-between mb-4">
-              <TabsList>
-                <TabsTrigger value="collection">تقرير الجمع</TabsTrigger>
-                <TabsTrigger value="payment">تقرير الدفع</TabsTrigger>
-              </TabsList>
-            </div>
+          <div className="rounded-lg border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="text-right">المندوب</TableHead>
+                  <TableHead className="text-right">تم التسليم</TableHead>
+                  <TableHead className="text-right">متأخر</TableHead>
+                  <TableHead className="text-right">مرتجع</TableHead>
+                  <TableHead className="text-right">نسبة النجاح</TableHead>
+                  <TableHead className="text-right">العمولة المستحقة</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {delegateReports.map((delegate) => (
+                  <TableRow key={delegate.id}>
+                    <TableCell className="font-medium">{delegate.name}</TableCell>
+                    <TableCell className="text-green-600 font-semibold">{delegate.totalDelivered}</TableCell>
+                    <TableCell className="text-yellow-600">{delegate.totalDelayed}</TableCell>
+                    <TableCell className="text-red-600">{delegate.totalReturned}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={delegate.successRate >= 80 ? "default" : delegate.successRate >= 60 ? "secondary" : "destructive"}
+                      >
+                        {delegate.successRate}%
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-bold text-primary">
+                      {delegate.commissionDue.toLocaleString()} ر.س
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="flex items-center justify-between pt-4 border-t mt-4">
+            <p className="text-muted-foreground">إجمالي {delegateReports.length} مناديب</p>
+            <p className="font-bold text-lg">
+              إجمالي العمولات: <span className="text-primary">{stats.totalCommissions.toLocaleString()} ر.س</span>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Collection Report */}
-            <TabsContent value="collection" className="space-y-4">
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleExportExcel("collection")}>
-                  <FileSpreadsheet className="w-4 h-4 ml-2" />
-                  تصدير Excel
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleExportPDF("collection")}>
-                  <FileText className="w-4 h-4 ml-2" />
-                  تصدير PDF
-                </Button>
-              </div>
-
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="text-right">التاريخ</TableHead>
-                      <TableHead className="text-right">المبلغ</TableHead>
-                      <TableHead className="text-right">الجامع</TableHead>
-                      <TableHead className="text-right">العميل</TableHead>
-                      <TableHead className="text-right">الحالة</TableHead>
-                      <TableHead className="text-right">ملاحظات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {collectionReports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell>{report.date}</TableCell>
-                        <TableCell className="font-semibold text-green-600">
-                          {report.amount.toLocaleString()} ج.م
-                        </TableCell>
-                        <TableCell>{report.collector}</TableCell>
-                        <TableCell>{report.customer}</TableCell>
-                        <TableCell>
-                          <Badge variant={report.status === "مكتمل" ? "default" : "secondary"}>
-                            {report.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{report.notes || "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t">
-                <p className="text-muted-foreground">إجمالي {collectionReports.length} عمليات</p>
-                <p className="font-bold text-lg">
-                  الإجمالي: <span className="text-green-600">{totalCollection.toLocaleString()} ج.م</span>
-                </p>
-              </div>
-            </TabsContent>
-
-            {/* Payment Report */}
-            <TabsContent value="payment" className="space-y-4">
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleExportExcel("payment")}>
-                  <FileSpreadsheet className="w-4 h-4 ml-2" />
-                  تصدير Excel
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => handleExportPDF("payment")}>
-                  <FileText className="w-4 h-4 ml-2" />
-                  تصدير PDF
-                </Button>
-              </div>
-
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="text-right">التاريخ</TableHead>
-                      <TableHead className="text-right">المبلغ</TableHead>
-                      <TableHead className="text-right">الدافع</TableHead>
-                      <TableHead className="text-right">النوع</TableHead>
-                      <TableHead className="text-right">الحالة</TableHead>
-                      <TableHead className="text-right">ملاحظات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paymentReports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell>{report.date}</TableCell>
-                        <TableCell className="font-semibold text-red-600">
-                          {report.amount.toLocaleString()} ج.م
-                        </TableCell>
-                        <TableCell>{report.payer}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{report.type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={report.status === "مكتمل" ? "default" : "secondary"}>
-                            {report.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{report.notes || "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t">
-                <p className="text-muted-foreground">إجمالي {paymentReports.length} عمليات</p>
-                <p className="font-bold text-lg">
-                  الإجمالي: <span className="text-red-600">{totalPayment.toLocaleString()} ج.م</span>
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
+      {/* Monthly Shipments Bar Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>عدد الشحنات الشهرية</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="shipments" name="عدد الشحنات" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
     </div>
