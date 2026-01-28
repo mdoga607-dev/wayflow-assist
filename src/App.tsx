@@ -33,7 +33,7 @@ import DelegateDetails from "./pages/DelegateDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
-import PrintLabel from "./pages/PrintLabel";
+import PrintLabel from "./components/ship/PrintLabel";
 import DelegateDashboard from "./pages/DelegateDashboard";
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();

@@ -1,3 +1,4 @@
+// hooks/useShipments.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -24,9 +25,9 @@ export interface Shipment {
 }
 
 export const useShipments = () => {
-  return useQuery({
+  return useQuery<Shipment[]>({
     queryKey: ["shipments"],
-    queryFn: async (): Promise<Shipment[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("shipments")
         .select(`
@@ -39,7 +40,8 @@ export const useShipments = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000, // 30 ثانية
+    staleTime: 5000, // 5 ثواني
   });
 };
 
@@ -56,12 +58,11 @@ export const useUpdateShipmentStatus = () => {
       newStatus: string;
       sendSMS?: boolean;
     }) => {
-      // Update status in database
       const { data: shipment, error } = await supabase
         .from("shipments")
-        .update({ 
+        .update({
           status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", shipmentId)
         .select()
@@ -69,7 +70,7 @@ export const useUpdateShipmentStatus = () => {
 
       if (error) throw error;
 
-      // Send SMS notification if requested
+      // إرسال SMS إذا طلب المستخدم
       if (sendSMS && shipment) {
         try {
           const { error: smsError } = await supabase.functions.invoke("send-sms", {
@@ -83,10 +84,10 @@ export const useUpdateShipmentStatus = () => {
           });
 
           if (smsError) {
-            console.error("SMS Error:", smsError);
+            console.warn("SMS sending failed:", smsError);
           }
-        } catch (e) {
-          console.error("Failed to send SMS:", e);
+        } catch (err) {
+          console.warn("SMS function invocation error:", err);
         }
       }
 
@@ -94,20 +95,24 @@ export const useUpdateShipmentStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shipments"] });
-      queryClient.invalidateQueries({ queryKey: ["recent-shipments"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "تم التحديث",
         description: "تم تحديث حالة الشحنة بنجاح",
       });
     },
-    onError: (error) => {
+    onError: (err: unknown) => {
+      let errorMessage = "تعذر تحديث حالة الشحنة";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
       toast({
         title: "خطأ",
-        description: "فشل في تحديث حالة الشحنة",
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error("Update error:", error);
+      console.error("Update shipment status error:", err);
     },
   });
 };
@@ -117,29 +122,29 @@ export const useDeleteShipment = () => {
 
   return useMutation({
     mutationFn: async (shipmentId: string) => {
-      const { error } = await supabase
-        .from("shipments")
-        .delete()
-        .eq("id", shipmentId);
-
+      const { error } = await supabase.from("shipments").delete().eq("id", shipmentId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shipments"] });
-      queryClient.invalidateQueries({ queryKey: ["recent-shipments"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       toast({
         title: "تم الحذف",
         description: "تم حذف الشحنة بنجاح",
       });
     },
-    onError: (error) => {
+    onError: (err: unknown) => {
+      let errorMessage = "تعذر حذف الشحنة";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
       toast({
         title: "خطأ",
-        description: "فشل في حذف الشحنة",
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error("Delete error:", error);
+      console.error("Delete shipment error:", err);
     },
   });
 };

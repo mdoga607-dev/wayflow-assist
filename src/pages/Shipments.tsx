@@ -1,7 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, Printer, MessageSquare } from "lucide-react";
+// pages/Shipments.tsx
+import { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Search,
+  Filter,
+  Download,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Printer,
+  MessageSquare,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,9 +41,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { useShipments, useUpdateShipmentStatus, useDeleteShipment } from "@/hooks/useShipments";
-import { supabase } from "@/integrations/supabase/client";
+import { useShipments, useUpdateShipmentStatus, useDeleteShipment, Shipment } from "@/hooks/useShipments";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 const statusLabels: Record<string, string> = {
   delivered: "تم التسليم",
@@ -44,49 +54,63 @@ const statusLabels: Record<string, string> = {
 };
 
 const Shipments = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [cityFilter, setCityFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
+  const [cityFilter, setCityFilter] = useState<"all" | string>("all");
   const [selectedShipments, setSelectedShipments] = useState<string[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedShipment, setSelectedShipment] = useState<any>(null);
-  const [newStatus, setNewStatus] = useState("");
+  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [newStatus, setNewStatus] = useState<string>("pending");
   const [sendSMS, setSendSMS] = useState(true);
 
-  const { data: shipments = [], isLoading, refetch } = useShipments();
+  const { data: shipments = [], isLoading } = useShipments();
   const updateStatus = useUpdateShipmentStatus();
   const deleteShipment = useDeleteShipment();
 
-  // Real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel("shipments-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "shipments" },
-        () => {
-          refetch();
-        }
-      )
-      .subscribe();
+  // استخراج المدن بشكل آمن (string فقط)
+  const cities = useMemo<string[]>(() => {
+    const citySet = new Set<string>();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
+    shipments.forEach((shipment) => {
+      const city = shipment.recipient_city;
+      if (city && typeof city === "string" && city.trim().length > 0) {
+        citySet.add(city.trim());
+      }
+    });
+
+    return Array.from(citySet).sort();
+  }, [shipments]);
+
+  const filteredShipments = useMemo(() => {
+    return shipments.filter((shipment) => {
+      const q = searchQuery.toLowerCase().trim();
+
+      const matchesSearch =
+        !q ||
+        shipment.tracking_number?.toLowerCase().includes(q) ||
+        shipment.recipient_name?.toLowerCase().includes(q) ||
+        shipment.recipient_phone?.includes(q);
+
+      const matchesStatus = statusFilter === "all" || shipment.status === statusFilter;
+      const matchesCity = cityFilter === "all" || shipment.recipient_city === cityFilter;
+
+      return matchesSearch && matchesStatus && matchesCity;
+    });
+  }, [shipments, searchQuery, statusFilter, cityFilter]);
 
   const handleSelectShipment = (id: string, checked: boolean) => {
     if (checked) {
-      setSelectedShipments(prev => [...prev, id]);
+      setSelectedShipments((prev) => [...prev, id]);
     } else {
-      setSelectedShipments(prev => prev.filter(s => s !== id));
+      setSelectedShipments((prev) => prev.filter((s) => s !== id));
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedShipments(filteredShipments.map(s => s.id));
+      setSelectedShipments(filteredShipments.map((s) => s.id));
     } else {
       setSelectedShipments([]);
     }
@@ -94,25 +118,33 @@ const Shipments = () => {
 
   const handleBulkPrint = () => {
     if (selectedShipments.length === 0) {
-      alert("برجاء اختيار شحنات للطباعة");
+      toast({
+        title: "يرجى اختيار شحنة واحدة على الأقل",
+        variant: "destructive",
+      });
       return;
     }
-    console.log("طباعة الشحنات:", selectedShipments);
+    
+    // حفظ IDs في localStorage ثم التوجيه
+    localStorage.setItem("selectedShipmentIds", JSON.stringify(selectedShipments));
+    navigate("/print-labels");
   };
 
-  const openEditDialog = (shipment: any) => {
+  const openEditDialog = (shipment: Shipment) => {
     setSelectedShipment(shipment);
     setNewStatus(shipment.status || "pending");
     setEditDialogOpen(true);
   };
 
-  const openDeleteDialog = (shipment: any) => {
+  const openDeleteDialog = (shipment: Shipment) => {
     setSelectedShipment(shipment);
     setDeleteDialogOpen(true);
   };
 
   const handleStatusUpdate = async () => {
-    if (selectedShipment && newStatus) {
+    if (!selectedShipment || !newStatus) return;
+
+    try {
       await updateStatus.mutateAsync({
         shipmentId: selectedShipment.id,
         newStatus,
@@ -120,32 +152,26 @@ const Shipments = () => {
       });
       setEditDialogOpen(false);
       setSelectedShipment(null);
+    } catch (err) {
+      console.error("Error updating status:", err);
     }
   };
 
   const handleDelete = async () => {
-    if (selectedShipment) {
+    if (!selectedShipment) return;
+
+    try {
       await deleteShipment.mutateAsync(selectedShipment.id);
       setDeleteDialogOpen(false);
       setSelectedShipment(null);
+    } catch (err) {
+      console.error("Error deleting shipment:", err);
     }
   };
 
-  const filteredShipments = shipments.filter((shipment) => {
-    const matchesSearch =
-      shipment.tracking_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      shipment.recipient_name.includes(searchQuery) ||
-      shipment.recipient_phone.includes(searchQuery);
-    const matchesStatus = statusFilter === "all" || shipment.status === statusFilter;
-    const matchesCity = cityFilter === "all" || shipment.recipient_city === cityFilter;
-    return matchesSearch && matchesStatus && matchesCity;
-  });
-
-  const cities = [...new Set(shipments.map(s => s.recipient_city).filter(Boolean))];
-
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-32" />
@@ -157,14 +183,20 @@ const Shipments = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container py-6 space-y-6" dir="rtl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">قائمة الشحنات</h1>
           <p className="text-muted-foreground">إدارة وتتبع جميع الشحنات</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleBulkPrint} disabled={selectedShipments.length === 0}>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleBulkPrint}
+            disabled={selectedShipments.length === 0}
+          >
             <Printer className="h-4 w-4" />
             طباعة ({selectedShipments.length})
           </Button>
@@ -173,7 +205,7 @@ const Shipments = () => {
             تصدير
           </Button>
           <Link to="/add-shipment">
-            <Button className="gap-2 bg-accent hover:bg-accent/90">
+            <Button className="gap-2">
               <Plus className="h-4 w-4" />
               إضافة شحنة
             </Button>
@@ -181,9 +213,10 @@ const Shipments = () => {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+      {/* Filters */}
+      <div className="bg-card rounded-xl p-4 shadow-sm border">
         <div className="flex flex-wrap gap-4 items-center">
-          <div className="relative flex-1 min-w-[250px]">
+          <div className="relative flex-1 min-w-[260px]">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="بحث برقم الشحنة، اسم العميل، أو الهاتف..."
@@ -192,6 +225,7 @@ const Shipments = () => {
               className="pr-10"
             />
           </div>
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <Filter className="h-4 w-4 ml-2" />
@@ -206,90 +240,119 @@ const Shipments = () => {
               <SelectItem value="returned">مرتجع</SelectItem>
             </SelectContent>
           </Select>
+
           <Select value={cityFilter} onValueChange={setCityFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="المدينة" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">جميع المدن</SelectItem>
-              {cities.map(city => (
-                <SelectItem key={city} value={city!}>{city}</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+      {/* Table */}
+      <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
+          <table className="w-full min-w-[900px]">
+            <thead className="bg-muted/50">
               <tr>
-                <th>
+                <th className="w-12 p-4 text-center">
                   <Checkbox
-                    checked={selectedShipments.length === filteredShipments.length && filteredShipments.length > 0}
+                    checked={
+                      selectedShipments.length === filteredShipments.length &&
+                      filteredShipments.length > 0
+                    }
                     onCheckedChange={handleSelectAll}
                   />
                 </th>
-                <th>رقم الشحنة</th>
-                <th>العميل</th>
-                <th>الهاتف</th>
-                <th>المدينة</th>
-                <th>التاجر</th>
-                <th>المندوب</th>
-                <th>الحالة</th>
-                <th>المبلغ</th>
-                <th>إجراءات</th>
+                <th className="p-4 text-right">رقم الشحنة</th>
+                <th className="p-4 text-right">العميل</th>
+                <th className="p-4 text-right">الهاتف</th>
+                <th className="p-4 text-right">المدينة</th>
+                <th className="p-4 text-right">التاجر</th>
+                <th className="p-4 text-right">المندوب</th>
+                <th className="p-4 text-right">الحالة</th>
+                <th className="p-4 text-right">المبلغ</th>
+                <th className="p-4 text-center">إجراءات</th>
               </tr>
             </thead>
             <tbody>
               {filteredShipments.map((shipment, index) => (
-                <tr 
-                  key={shipment.id} 
-                  className="animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                <tr
+                  key={shipment.id}
+                  className="border-b hover:bg-muted/30 transition-colors"
+                  style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <td>
+                  <td className="p-4 text-center">
                     <Checkbox
                       checked={selectedShipments.includes(shipment.id)}
-                      onCheckedChange={(checked) => handleSelectShipment(shipment.id, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleSelectShipment(shipment.id, !!checked)
+                      }
                     />
                   </td>
-                  <td>
-                    <Link to={`/track/${shipment.tracking_number}`} className="font-medium text-primary hover:underline">
+                  <td className="p-4">
+                    <Link
+                      to={`/track/${shipment.tracking_number}`}
+                      className="font-medium text-primary hover:underline"
+                    >
                       {shipment.tracking_number}
                     </Link>
                   </td>
-                  <td className="font-medium">{shipment.recipient_name}</td>
-                  <td dir="ltr" className="text-right">{shipment.recipient_phone}</td>
-                  <td>{shipment.recipient_city || "-"}</td>
-                  <td>{shipment.shippers?.name || "-"}</td>
-                  <td>{shipment.delegates?.name || "-"}</td>
-                  <td>
-                    <span className={cn("status-badge", `status-${shipment.status}`)}>
+                  <td className="p-4 font-medium">{shipment.recipient_name}</td>
+                  <td className="p-4 font-mono text-right dir-ltr">
+                    {shipment.recipient_phone}
+                  </td>
+                  <td className="p-4">{shipment.recipient_city || "—"}</td>
+                  <td className="p-4">{shipment.shippers?.name || "—"}</td>
+                  <td className="p-4">{shipment.delegates?.name || "—"}</td>
+                  <td className="p-4">
+                    <span
+                      className={cn(
+                        "inline-block px-2.5 py-1 text-xs font-medium rounded-full",
+                        shipment.status === "delivered"
+                          ? "bg-green-100 text-green-800"
+                          : shipment.status === "transit"
+                          ? "bg-blue-100 text-blue-800"
+                          : shipment.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : shipment.status === "delayed"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                      )}
+                    >
                       {statusLabels[shipment.status || "pending"]}
                     </span>
                   </td>
-                  <td className="font-semibold">{shipment.cod_amount || 0} ر.س</td>
-                  <td>
-                    <div className="flex items-center gap-1">
+                  <td className="p-4 font-semibold">
+                    {shipment.cod_amount ? `${shipment.cod_amount} ر.س` : "—"}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-1 justify-center">
                       <Link to={`/track/${shipment.tracking_number}`}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-accent hover:text-accent"
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => openEditDialog(shipment)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive/90"
                         onClick={() => openDeleteDialog(shipment)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -301,25 +364,25 @@ const Shipments = () => {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-border flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            عرض {filteredShipments.length} من {shipments.length} شحنة
-          </p>
+
+        <div className="p-4 border-t text-sm text-muted-foreground text-center sm:text-right">
+          عرض {filteredShipments.length} من أصل {shipments.length} شحنة
         </div>
       </div>
 
-      {/* Edit Status Dialog */}
+      {/* تعديل الحالة */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>تعديل حالة الشحنة</DialogTitle>
             <DialogDescription>
-              تحديث حالة الشحنة {selectedShipment?.tracking_number}
+              رقم التتبع: {selectedShipment?.tracking_number || "—"}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label className="text-sm font-medium">الحالة الجديدة</label>
+
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium block">الحالة الجديدة</label>
               <Select value={newStatus} onValueChange={setNewStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="اختر الحالة" />
@@ -333,45 +396,56 @@ const Shipments = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox 
-                id="sendSMS" 
-                checked={sendSMS} 
-                onCheckedChange={(checked) => setSendSMS(checked as boolean)} 
+
+            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Checkbox
+                id="send-sms"
+                checked={sendSMS}
+                onCheckedChange={(checked) => setSendSMS(!!checked)}
               />
-              <label htmlFor="sendSMS" className="text-sm flex items-center gap-2">
+              <label
+                htmlFor="send-sms"
+                className="text-sm font-medium leading-none flex items-center gap-2 cursor-pointer"
+              >
                 <MessageSquare className="h-4 w-4" />
                 إرسال إشعار SMS للعميل
               </label>
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               إلغاء
             </Button>
-            <Button onClick={handleStatusUpdate} disabled={updateStatus.isPending}>
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={updateStatus.isPending || !newStatus}
+            >
               {updateStatus.isPending ? "جاري التحديث..." : "تحديث الحالة"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* تأكيد الحذف */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم حذف الشحنة {selectedShipment?.tracking_number} نهائياً. لا يمكن التراجع عن هذا الإجراء.
+              سيتم حذف الشحنة رقم {selectedShipment?.tracking_number || "—"} نهائيًا.
+              <br />
+              هذا الإجراء لا يمكن التراجع عنه.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteShipment.isPending}
             >
-              {deleteShipment.isPending ? "جاري الحذف..." : "حذف"}
+              {deleteShipment.isPending ? "جاري الحذف..." : "حذف الشحنة"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
