@@ -2,7 +2,8 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-type AppRole = 'head_manager' | 'user' | 'guest';
+// 1. تحديث الأنواع لتشمل كل الرتب التي أضفناها سابقاً
+type AppRole = 'head_manager' | 'manager' | 'courier' | 'shipper' | 'user' | 'guest';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,30 +14,35 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, role, loading } = useAuth();
   const location = useLocation();
 
+  // 2. حالة التحميل: مهمة جداً لانتظار رد Supabase بشأن الرتبة
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-[#0f0f0f]">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">جاري التحميل...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-[#d24b60] mx-auto mb-4" />
+          <p className="text-white/60 font-medium">جاري التحقق من الصلاحيات...</p>
         </div>
       </div>
     );
   }
 
+  // 3. إذا لم يكن المستخدم مسجل دخول، حوله لصفحة الـ Auth
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If allowedRoles is specified, check if user has one of the allowed roles
+  // 4. التحقق من الصلاحيات الأدوار
   if (allowedRoles && allowedRoles.length > 0) {
-    // Head manager can access everything
+    // المدير العام (head_manager) له حق الوصول لكل شيء دائماً
     if (role === 'head_manager') {
       return <>{children}</>;
     }
 
-    // Check if user's role is in allowed roles
-    if (!role || !allowedRoles.includes(role)) {
+    // التحقق إذا كانت رتبة المستخدم الحالية ضمن الأدوار المسموح لها بدخول هذه الصفحة
+    const isAllowed = role && allowedRoles.includes(role as AppRole);
+
+    if (!isAllowed) {
+      // إذا لم يكن لديه صلاحية، حوله لصفحة "غير مصرح لك"
       return <Navigate to="/unauthorized" replace />;
     }
   }

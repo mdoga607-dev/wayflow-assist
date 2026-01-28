@@ -11,6 +11,7 @@ import { useRecentShipments } from "@/hooks/useRecentShipments";
 import { Link } from "react-router-dom";
 import { useRef } from "react";
 import * as XLSX from 'xlsx';
+import { supabase } from "@/integrations/supabase/client";
 
 const statusLabels: Record<string, string> = {
   delivered: "تم التسليم",
@@ -49,14 +50,13 @@ const RecentShipments = () => {
   };
 
   // --- 2. وظيفة تصفير البيانات ---
-  const handleResetData = () => {
-    const confirmReset = window.confirm("⚠️ تحذير: هل أنت متأكد من تصفير وحذف جميع البيانات؟ لا يمكن التراجع!");
-    if (confirmReset) {
-      console.log("يتم الآن تصفير جميع العدادات والبيانات...");
-      // أضف هنا استدعاء الـ API الخاص بمسح قاعدة البيانات
-      alert("تم تصفير البيانات بنجاح");
-    }
-  };
+ const handleResetData = async () => {
+  if (window.confirm("تحذير: سيتم حذف جميع الشحنات!")) {
+    const { error } = await supabase.from('shipments').delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
+    if (error) alert("فشل الحذف");
+    else alert("تم التصفير بنجاح");
+  }
+};
 
   if (isLoading) {
     return (

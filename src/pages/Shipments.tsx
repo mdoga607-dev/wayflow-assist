@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Filter, Download, Plus, Eye, Edit, Trash2, Printer, MessageSquare } from "lucide-react";

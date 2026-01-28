@@ -2,18 +2,16 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
-type AppRole = 'head_manager' | 'user' | 'guest';
+export type AppRole = 'head_manager' | 'manager' | 'courier' | 'shipper' | 'user' | 'guest';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  isHeadManager: boolean;
-  isGuest: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,48 +29,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching role:', error);
-        return null;
-      }
-
-      return data?.role as AppRole | null;
-    } catch (error) {
-      console.error('Error fetching role:', error);
-      return null;
+      
+      if (error || !data) return 'user' as AppRole;
+      return data.role as AppRole;
+    } catch (e) { 
+      return 'user' as AppRole; 
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    // التحقق الأولي من الجلسة
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
-
+        
         if (session?.user) {
-          // Use setTimeout to avoid potential race conditions
-          setTimeout(async () => {
-            const userRole = await fetchUserRole(session.user.id);
-            setRole(userRole);
-            setLoading(false);
-          }, 0);
-        } else {
-          setRole(null);
-          setLoading(false);
+          const userRole = await fetchUserRole(session.user.id);
+          setRole(userRole);
         }
+      } finally {
+        setLoading(false); // نضمن توقف التحميل دائماً
       }
-    );
+    };
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    initAuth();
 
-      if (session?.user) {
-        const userRole = await fetchUserRole(session.user.id);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, _session) => {
+      setSession(_session);
+      setUser(_session?.user ?? null);
+      if (_session?.user) {
+        const userRole = await fetchUserRole(_session.user.id);
         setRole(userRole);
+      } else {
+        setRole(null);
       }
       setLoading(false);
     });
@@ -81,53 +72,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
-  };
-
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-    return { error };
+    return await supabase.auth.signInWithPassword({ email, password });
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    setSession(null);
     setRole(null);
   };
 
-  const value = {
-    user,
-    session,
-    role,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    isHeadManager: role === 'head_manager',
-    isGuest: role === 'guest',
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, session, role, loading, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };

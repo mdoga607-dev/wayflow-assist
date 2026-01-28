@@ -3,8 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 interface SMSRequest {
@@ -15,16 +14,8 @@ interface SMSRequest {
   tracking_number: string;
 }
 
-const statusMessages: Record<string, string> = {
-  pending: "تم استلام شحنتك وهي قيد التجهيز",
-  transit: "شحنتك في الطريق إليك",
-  delivered: "تم تسليم شحنتك بنجاح",
-  delayed: "نعتذر، تأخرت شحنتك وسيتم التواصل معك قريباً",
-  returned: "تم إرجاع شحنتك، يرجى التواصل مع الدعم",
-};
-
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // التعامل مع طلبات CORS Preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -34,24 +25,21 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const {
-      shipment_id,
-      new_status,
-      recipient_phone,
-      recipient_name,
-      tracking_number,
-    }: SMSRequest = await req.json();
+    const body: SMSRequest = await req.json();
+    const { shipment_id, new_status, recipient_phone, recipient_name, tracking_number } = body;
 
-    console.log(`Sending SMS for shipment ${tracking_number} to ${recipient_phone}`);
+    const statusMessages: Record<string, string> = {
+      pending: "تم استلام شحنتك وهي قيد التجهيز",
+      transit: "شحنتك في الطريق إليك",
+      delivered: "تم تسليم شحنتك بنجاح",
+      delayed: "نعتذر، تأخرت شحنتك وسيتم التواصل معك قريباً",
+      returned: "تم إرجاع شحنتك، يرجى التواصل مع الدعم",
+    };
 
-    const statusMessage = statusMessages[new_status] || `حالة شحنتك: ${new_status}`;
-    const smsMessage = `مرحباً ${recipient_name}،\n${statusMessage}\nرقم التتبع: ${tracking_number}\n\nشكراً لاستخدامك خدماتنا`;
+    const statusMessage = statusMessages[new_status] || `حالة شحنتك هي: ${new_status}`;
+    const smsMessage = `مرحباً ${recipient_name}،\n${statusMessage}\nرقم التتبع: ${tracking_number}\nشكراً لاستخدامك خدماتنا.`;
 
-    // Log the SMS notification (in production, integrate with Twilio/MessageBird)
-    console.log("SMS Message:", smsMessage);
-    console.log("To Phone:", recipient_phone);
-
-    // Store notification log
+    // تسجيل العملية في قاعدة البيانات
     const { error: logError } = await supabase
       .from("shipments")
       .update({ 
@@ -60,37 +48,19 @@ serve(async (req) => {
       })
       .eq("id", shipment_id);
 
-    if (logError) {
-      console.error("Error updating shipment:", logError);
-    }
+    if (logError) throw logError;
 
-    // In production, you would integrate with a real SMS provider here
-    // Example with Twilio:
-    // const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    // const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    // const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
-    
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "SMS notification queued successfully",
-        sms_content: smsMessage,
-        phone: recipient_phone,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error sending SMS:", errorMessage);
-    return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    // هنا تضع كود الربط مع مزود الخدمة مثل Twilio أو Unifonic مستقبلاً
+    console.log(`Sending to ${recipient_phone}: ${smsMessage}`);
+
+    return new Response(JSON.stringify({ success: true, message: "تمت المعالجة" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
   }
 });
