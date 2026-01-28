@@ -3,7 +3,7 @@ import {
   Package, Truck, Clock, FileText, Users, MessageSquare, 
   Bell, MapPin, Home, Wallet, LayoutDashboard, Settings,
   ChevronDown, ChevronUp, Plus, ScanLine, RefreshCcw, BarChart3, Receipt, Shield,
-  UserCheck
+  UserCheck, Printer, UserCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,11 +33,18 @@ const menuItems: MenuItem[] = [
     children: [
       { icon: Package, label: "كافة الشحنات", path: "/shipments", roles: ["head_manager", "manager", "courier"] },
       { icon: Plus, label: "إضافة شحنة", path: "/add-shipment", roles: ["head_manager", "manager"] },
+      { icon: Printer, label: "طباعة البوليصات", path: "/print-label", roles: ["head_manager", "manager"] },
       { icon: Truck, label: "شحنات المناديب", path: "/courier-shipments", roles: ["head_manager", "manager"] },
       { icon: Clock, label: "الشحنات المتأخرة", path: "/late-shipments", roles: ["head_manager", "manager"], count: 10 },
       { icon: RefreshCcw, label: "متابعة المرتجعات", path: "/returned-tracking", roles: ["head_manager", "manager"] },
       { icon: ScanLine, label: "قراءة الباركود", path: "/scan-shipments", roles: ["head_manager", "manager"] },
     ]
+  },
+  {
+    icon: UserCircle,
+    label: "لوحة المندوب",
+    path: "/delegate-dashboard",
+    roles: ["head_manager", "manager", "courier"],
   },
   {
     icon: FileText,

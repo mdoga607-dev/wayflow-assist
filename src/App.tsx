@@ -33,6 +33,8 @@ import DelegateDetails from "./pages/DelegateDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
+import PrintLabel from "./pages/PrintLabel";
+import DelegateDashboard from "./pages/DelegateDashboard";
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
 
@@ -99,6 +101,8 @@ const App = () => (
                 <Route path="reports" element={<Reports />} />
                 <Route path="export" element={<ExportShipments />} />
                 <Route path="track-delegates" element={<TrackDelegates />} />
+                <Route path="print-label" element={<PrintLabel />} />
+                <Route path="delegate-dashboard" element={<DelegateDashboard />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

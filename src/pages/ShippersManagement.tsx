@@ -34,7 +34,7 @@ const ShippersManagement = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingShipper, setEditingShipper] = useState<Shipper | null>(null);
   const [formData, setFormData] = useState({
-    name: "", phone: "", email: "", address: "", city: "", branch: "", status: "active",
+    name: "", phone: "" as string | null, email: "" as string | null, address: "" as string | null, city: "" as string | null, branch: "" as string | null, status: "active",
   });
 
   const { data: shippers = [], isLoading } = useQuery({
