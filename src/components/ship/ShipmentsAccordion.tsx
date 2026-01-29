@@ -1,70 +1,23 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { 
-  ChevronDown, 
-  ChevronUp, 
-  Printer, 
-  ScanLine, 
-  FileSpreadsheet,
-  Copy,
-  Image as ImageIcon,
-  Eye
+  ChevronDown, ChevronUp, Printer, ScanLine, FileSpreadsheet,
+  Copy, ImageIcon, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Shipment } from '@/hooks/useCouriersShipments';
 
-// تعيين ألوان الحالات
-const statusConfig: Record<string, { 
-  label: string; 
-  color: string; 
-  icon: typeof ScanLine | typeof Printer;
-}> = {
-  'transit': { 
-    label: 'قيد التوصيل', 
-    color: 'bg-blue-100 text-blue-800', 
-    icon: ScanLine 
-  },
-  'warehouse': { 
-    label: 'في المخزن', 
-    color: 'bg-gray-100 text-gray-800', 
-    icon: Printer 
-  },
-  'pending': { 
-    label: 'في الانتظار', 
-    color: 'bg-yellow-100 text-yellow-800', 
-    icon: ScanLine 
-  },
-  'delivered': { 
-    label: 'تم التسليم', 
-    color: 'bg-green-100 text-green-800', 
-    icon: Printer 
-  },
-  'delayed': { 
-    label: 'متأخر', 
-    color: 'bg-red-100 text-red-800', 
-    icon: ScanLine 
-  },
-  'returned': { 
-    label: 'مرتجع', 
-    color: 'bg-purple-100 text-purple-800', 
-    icon: Printer 
-  }
+const statusConfig: Record<string, { label: string; color: string; icon: typeof ScanLine | typeof Printer; }> = {
+  'transit': { label: 'قيد التوصيل', color: 'bg-blue-100 text-blue-800', icon: ScanLine },
+  'warehouse': { label: 'في المخزن', color: 'bg-gray-100 text-gray-800', icon: Printer },
+  'pending': { label: 'في الانتظار', color: 'bg-yellow-100 text-yellow-800', icon: ScanLine },
+  'delivered': { label: 'تم التسليم', color: 'bg-green-100 text-green-800', icon: Printer },
+  'delayed': { label: 'متأخر', color: 'bg-red-100 text-red-800', icon: ScanLine },
+  'returned': { label: 'مرتجع', color: 'bg-purple-100 text-purple-800', icon: Printer }
 };
 
 interface ShipmentsAccordionProps {
@@ -89,7 +42,6 @@ const ShipmentsAccordion = ({
   const [openStatuses, setOpenStatuses] = useState<Record<string, boolean>>({});
   const [selectedPerStatus, setSelectedPerStatus] = useState<Record<string, string[]>>({});
 
-  // معالجة اختيار/إلغاء اختيار جميع الشحنات في حالة معينة
   const handleSelectAll = (statusId: string, checked: boolean) => {
     setSelectedPerStatus(prev => {
       const newSelection = { ...prev };
@@ -98,16 +50,12 @@ const ShipmentsAccordion = ({
       } else {
         delete newSelection[statusId];
       }
-      
-      // تحديث القائمة الرئيسية
       const allSelected = Object.values(newSelection).flat();
       onShipmentSelect(allSelected);
-      
       return newSelection;
     });
   };
 
-  // معالجة اختيار شحنة فردية
   const handleCheckboxChange = (statusId: string, shipmentId: string, checked: boolean) => {
     setSelectedPerStatus(prev => {
       const newSelection = { ...prev };
@@ -119,10 +67,8 @@ const ShipmentsAccordion = ({
         newSelection[statusId] = newSelection[statusId].filter(id => id !== shipmentId);
       }
       
-      // تحديث القائمة الرئيسية
       const allSelected = Object.values(newSelection).flat();
       onShipmentSelect(allSelected);
-      
       return newSelection;
     });
   };
@@ -147,20 +93,13 @@ const ShipmentsAccordion = ({
 
   return (
     <div className="space-y-4">
-      {Object.entries(shipments).map(([statusId, statusShipments], index) => {
-        const config = statusConfig[statusId] || { 
-          label: statusId, 
-          color: 'bg-gray-100 text-gray-800', 
-          icon: Printer 
-        };
+      {Object.entries(shipments).map(([statusId, statusShipments]) => {
+        const config = statusConfig[statusId] || { label: statusId, color: 'bg-gray-100 text-gray-800', icon: Printer };
         const Icon = config.icon;
         const isOpen = openStatuses[statusId] ?? false;
         
-        // تحديد حالة الاختيار الجزئي
-        const allSelected = statusShipments.length > 0 && 
-          selectedPerStatus[statusId]?.length === statusShipments.length;
-        const someSelected = selectedPerStatus[statusId]?.length > 0 && 
-          selectedPerStatus[statusId].length < statusShipments.length;
+        const allSelected = statusShipments.length > 0 && selectedPerStatus[statusId]?.length === statusShipments.length;
+        const someSelected = selectedPerStatus[statusId]?.length > 0 && selectedPerStatus[statusId].length < statusShipments.length;
 
         return (
           <Card key={statusId} className="overflow-hidden">
@@ -169,7 +108,6 @@ const ShipmentsAccordion = ({
               onClick={() => setOpenStatuses(prev => ({ ...prev, [statusId]: !prev[statusId] }))}
             >
               <div className="flex items-center gap-3 flex-1">
-                {/* حل بديل لـ indeterminate باستخدام div مخصص */}
                 <div 
                   className={cn(
                     "w-5 h-5 rounded border flex items-center justify-center cursor-pointer",
@@ -181,12 +119,8 @@ const ShipmentsAccordion = ({
                     handleSelectAll(statusId, !allSelected);
                   }}
                 >
-                  {someSelected && (
-                    <div className="w-3 h-0.5 bg-white rounded-full"></div>
-                  )}
-                  {allSelected && (
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  )}
+                  {someSelected && <div className="w-3 h-0.5 bg-white rounded-full"></div>}
+                  {allSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
                 </div>
                 
                 <Icon className="h-5 w-5 text-primary" />
@@ -207,8 +141,7 @@ const ShipmentsAccordion = ({
                           onScan(statusId === 'transit' ? 'delivery' : 'dispatch');
                         }}
                       >
-                        <ScanLine className="h-3 w-3" />
-                        مسح ضوئي
+                        <ScanLine className="h-3 w-3" /> مسح ضوئي
                       </Button>
                       <Button
                         variant="ghost"
@@ -219,8 +152,7 @@ const ShipmentsAccordion = ({
                           onPrint();
                         }}
                       >
-                        <Printer className="h-3 w-3" />
-                        طباعة
+                        <Printer className="h-3 w-3" /> طباعة
                       </Button>
                     </div>
                   )}
@@ -228,37 +160,13 @@ const ShipmentsAccordion = ({
               </div>
               
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopyShipments(statusShipments.map(s => s.tracking_number));
-                  }}
-                >
-                  <Copy className="h-3 w-3" />
-                  نسخ الأرقام
+                <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={(e) => { e.stopPropagation(); onCopyShipments(statusShipments.map(s => s.tracking_number)); }}>
+                  <Copy className="h-3 w-3" /> نسخ الأرقام
                 </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onExportExcel(config.label, statusShipments);
-                  }}
-                >
-                  <FileSpreadsheet className="h-3 w-3" />
-                  تصدير
+                <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={(e) => { e.stopPropagation(); onExportExcel(config.label, statusShipments); }}>
+                  <FileSpreadsheet className="h-3 w-3" /> تصدير
                 </Button>
-                
-                {isOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                )}
+                {isOpen ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
               </div>
             </div>
 
@@ -277,8 +185,7 @@ const ShipmentsAccordion = ({
                       <TableHead>الهاتف</TableHead>
                       <TableHead>سبب الحالة</TableHead>
                       <TableHead>المبلغ</TableHead>
-                      <TableHead className="text-center">المهام</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead className="text-center">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -287,44 +194,22 @@ const ShipmentsAccordion = ({
                         <TableCell>
                           <Checkbox
                             checked={selectedPerStatus[statusId]?.includes(shipment.id) || false}
-                            onCheckedChange={(checked) => 
-                              handleCheckboxChange(statusId, shipment.id, checked as boolean)
-                            }
+                            onCheckedChange={(checked) => handleCheckboxChange(statusId, shipment.id, checked as boolean)}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </TableCell>
-                        <TableCell className="text-xs">
-                          {new Date(shipment.created_at).toLocaleDateString('ar-EG')}
-                        </TableCell>
-                        <TableCell className="font-mono font-medium">
-                          {shipment.tracking_number}
-                        </TableCell>
+                        <TableCell className="text-xs">{new Date(shipment.created_at).toLocaleDateString('ar-EG')}</TableCell>
+                        <TableCell className="font-mono font-medium">{shipment.tracking_number}</TableCell>
                         <TableCell>{shipment.order_id || '-'}</TableCell>
                         <TableCell>{shipment.shipper_name}</TableCell>
                         <TableCell>{shipment.recipient_name}</TableCell>
                         <TableCell>{shipment.recipient_area}</TableCell>
-                        <TableCell dir="ltr" className="font-mono">
-                          {shipment.recipient_phone}
-                        </TableCell>
+                        <TableCell dir="ltr" className="font-mono">{shipment.recipient_phone}</TableCell>
                         <TableCell>{shipment.status_reason || '-'}</TableCell>
-                        <TableCell className="font-semibold">
-                          {shipment.cod_amount ? `${shipment.cod_amount} ر.س` : '-'}
-                        </TableCell>
-                       <TableCell className="text-center">
-                            {Number(shipment.tasks_count || 0) > 0 && (
-                            <span className="text-primary font-medium">
-                            {shipment.tasks_count}
-                            </span>
-                        )}
-                        </TableCell>
+                        <TableCell className="font-semibold">{shipment.cod_amount ? `${shipment.cod_amount} ر.س` : '-'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => window.open(`/track/${shipment.tracking_number}`, '_blank')}
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(`/track/${shipment.tracking_number}`, '_blank')}>
                               <Eye className="h-4 w-4" />
                             </Button>
                             <DropdownMenu>
@@ -335,16 +220,13 @@ const ShipmentsAccordion = ({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem>
-                                  <Printer className="h-4 w-4 ml-2" />
-                                  طباعة بوليصة
+                                  <Printer className="h-4 w-4 ml-2" /> طباعة بوليصة
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
-                                  <ImageIcon className="h-4 w-4 ml-2" />
-                                  عرض الصور
+                                  <ImageIcon className="h-4 w-4 ml-2" /> عرض الصور
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-destructive font-medium">
-                                  <FileSpreadsheet className="h-4 w-4 ml-2" />
-                                  حذف الشحنة
+                                  <FileSpreadsheet className="h-4 w-4 ml-2" /> حذف الشحنة
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>

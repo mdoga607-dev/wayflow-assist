@@ -53,7 +53,6 @@ const CouriersShipments = () => {
   useEffect(() => {
     fetchDelegates();
     
-    // قراءة المعلمات من الرابط
     const delegateId = searchParams.get('delegate_id');
     const sheetId = searchParams.get('sheet_id');
     
@@ -77,13 +76,11 @@ const CouriersShipments = () => {
     setSelectedDelegateId(delegateId);
     setSelectedSheetId(sheetId || '');
     
-    // تحديث الرابط
     const params = new URLSearchParams();
     params.set('delegate_id', delegateId);
     if (sheetId) params.set('sheet_id', sheetId);
     setSearchParams(params);
     
-    // جلب البيانات
     fetchSheets(delegateId);
     fetchReturnedSheets(delegateId);
     fetchCourierInfo(delegateId);
@@ -109,7 +106,6 @@ const CouriersShipments = () => {
         description: "تم تغيير حالة الشحنات بنجاح"
       });
       
-      // إعادة تحميل الشحنات
       fetchShipments(selectedDelegateId, selectedSheetId);
       setSelectedShipments([]);
       setIsStatusModalOpen(false);
@@ -198,7 +194,7 @@ const CouriersShipments = () => {
 
       {/* شريط البحث */}
       <CourierSearchBar
-        couriers={delegates} // ← صحيح: اسم الخاصية متطابق مع الواجهة
+        couriers={delegates}
         sheets={sheets}
         onSearch={handleSearch}
         initialCourierId={selectedDelegateId}
@@ -210,13 +206,7 @@ const CouriersShipments = () => {
         <CourierInfoCard
           courierInfo={courierInfo}
           onAction={(action) => {
-            if (action === 'warehouse_receive') {
-              // معالجة استلام في المخزن
-            } else if (action === 'warehouse_returned') {
-              // معالجة ارتجاع للمخزن
-            } else if (action === 'receive_same_status') {
-              // معالجة استلام بنفس الحالات
-            } else if (action === 'change_status_courier') {
+            if (action === 'change_status_courier') {
               setIsStatusModalOpen(true);
             }
           }}
@@ -246,7 +236,6 @@ const CouriersShipments = () => {
             toast({ title: "تم النسخ", description: "تم نسخ أرقام البوليصات إلى الحافظة" });
           }}
           onExportExcel={(statusName, shipments) => {
-            console.log('Exporting:', statusName, shipments);
             toast({ title: "جاري التصدير", description: "سيتم تنزيل الملف قريباً" });
           }}
         />

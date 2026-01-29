@@ -1,0 +1,21 @@
+/* src/components/ui/MapSelector.css */
+.leaflet-container {
+  width: 100%;
+  height: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  direction: ltr !important;
+}
+
+.leaflet-control {
+  direction: ltr !important;
+}
+
+.leaflet-bar a {
+  background-color: #ffffff !important;
+  border: 1px solid #ddd !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #f0f0f0 !important;
+}

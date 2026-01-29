@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { NotificationProvider } from "@/components/notifications/NotificationProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
-
 // Pages
 import Dashboard from "./pages/Dashboard";
 import Shipments from "./pages/Shipments";
@@ -24,6 +23,7 @@ import ShippersManagement from "./pages/ShippersManagement";
 import DelegatesManagement from "./pages/DelegatesManagement";
 import TrackShipment from "./pages/TrackShipment";
 import Auth from "./pages/Auth";
+import AddBalance from "./pages/balance/AddBalance"; // ✅ إضافة جديدة
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
@@ -35,6 +35,13 @@ import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import PrintLabel from "@/components/ship/PrintLabel";
 import DelegateDashboard from "./pages/DelegateDashboard";
+import CouriersShipments from "./components/ship/CouriersShipments";
+import SheetsPage from "./pages/SheetsPage";
+import CollectionReport from "./pages/balance/CollectionReport";
+import GuestLanding from "./pages/GuestLanding";
+import ShipperPage from "./pages/ShipperPage";
+import CourierDashboard from "./pages/CourierDashboard";
+
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
 
@@ -54,6 +61,7 @@ const App = () => (
               <Route path="/guest" element={<GuestOrders />} />
               <Route path="/track/:trackingNumber" element={<TrackShipment />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
+              
 
               {/* المسارات المحمية */}
               <Route
@@ -73,10 +81,46 @@ const App = () => (
                 <Route path="delayed-shipments" element={<DelayedShipments />} />
                 <Route path="delegate-shipments" element={<DelegateShipments />} />
                 <Route path="returns" element={<Returns />} />
+                <Route path="/" element={<GuestLanding />} />
+                <Route path="/shipper-dashboard" 
+                      element={
+                        <ProtectedRoute allowedRoles={['shipper']}>
+                          <ShipperPage />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route path="/courier-dashboard" 
+                      element={
+                        <ProtectedRoute allowedRoles={['courier']}>
+                          <CourierDashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
                 
-                <Route path="balance" element={<BalanceManagement />} />
-                <Route path="payments" element={<PaymentDocuments />} />
-                
+              <Route path="balance">
+  {/* يجب أن تكون المسارات الأطول أولاً */}
+  <Route 
+    path="add" 
+    element={
+      <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
+        <AddBalance />
+      </ProtectedRoute>
+    } 
+  />
+  <Route 
+    path="collection-report" 
+    element={
+      <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
+        <CollectionReport />
+      </ProtectedRoute>
+    } 
+  />
+  {/* الصفحة الرئيسية للحسابات */}
+  <Route index element={<BalanceManagement />} />
+</Route>
+
+            {/* صفحة المستندات المالية (تبقى منفصلة) */}
+            <Route path="payments" element={<PaymentDocuments />} />
                 <Route 
                   path="shippers" 
                   element={
@@ -96,13 +140,21 @@ const App = () => (
                     </ProtectedRoute>
                   } 
                 />
-
+              <Route 
+                path="sheets" 
+                element={
+                  <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
+                    <SheetsPage />
+                  </ProtectedRoute>
+                } 
+/>
                 <Route path="profile" element={<Profile />} /> 
                 <Route path="reports" element={<Reports />} />
                 <Route path="export" element={<ExportShipments />} />
                 <Route path="track-delegates" element={<TrackDelegates />} />
-                <Route path="print-label" element={<PrintLabel />} />
+                <Route path="print-labels" element={<PrintLabel />} />
                 <Route path="delegate-dashboard" element={<DelegateDashboard />} />
+                <Route path="courier-shipments" element={<CouriersShipments />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
