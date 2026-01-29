@@ -4,6 +4,8 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
+// الأدوار المعرفة في قاعدة البيانات: head_manager, user, guest
+// لكن في الكود نستخدم أدوار إضافية للتوافق مع الواجهة
 export type AppRole = 'head_manager' | 'manager' | 'courier' | 'shipper' | 'user' | 'guest';
 
 interface AuthContextType {

@@ -1,5 +1,6 @@
 // components/ship/ShipmentLabel.tsx
 import { Shipment } from "@/hooks/useShipments";
+import { QRCodeSVG } from "qrcode.react";
 
 interface ShipmentLabelProps {
   shipment: Shipment;
@@ -14,6 +15,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function ShipmentLabel({ shipment }: ShipmentLabelProps) {
+  const trackingUrl = `${window.location.origin}/track/${shipment.tracking_number}`;
+  
   return (
     <div 
       className="p-4 border text-xs bg-white h-full w-full"
@@ -25,15 +28,27 @@ export default function ShipmentLabel({ shipment }: ShipmentLabelProps) {
         boxSizing: "border-box"
       }}
     >
-      {/* Header */}
-      <div className="border-b pb-2 mb-3 text-center">
-        <h2 
-          className="font-bold text-lg mb-1"
-          style={{ fontSize: "16px", fontWeight: "bold" }}
-        >
-          بوليصة شحن
-        </h2>
-        <p className="text-sm opacity-70">Shipping Label</p>
+      {/* Header with QR */}
+      <div className="flex items-start justify-between border-b pb-3 mb-3">
+        <div className="text-center flex-1">
+          <h2 
+            className="font-bold text-lg mb-1"
+            style={{ fontSize: "16px", fontWeight: "bold" }}
+          >
+            بوليصة شحن
+          </h2>
+          <p className="text-sm opacity-70">Shipping Label</p>
+        </div>
+        
+        {/* QR Code */}
+        <div className="flex-shrink-0">
+          <QRCodeSVG 
+            value={trackingUrl}
+            size={64}
+            level="M"
+            includeMargin={false}
+          />
+        </div>
       </div>
 
       {/* Tracking Number */}
@@ -55,7 +70,9 @@ export default function ShipmentLabel({ shipment }: ShipmentLabelProps) {
         </div>
         <div>
           <label className="block text-xs font-semibold mb-1">الهاتف:</label>
-          <p className="font-mono font-medium dir-ltr">{shipment.recipient_phone}</p>
+          <p className="font-mono font-medium" style={{ direction: "ltr", textAlign: "right" }}>
+            {shipment.recipient_phone}
+          </p>
         </div>
       </div>
 
@@ -87,7 +104,7 @@ export default function ShipmentLabel({ shipment }: ShipmentLabelProps) {
                 ? "bg-blue-100 text-blue-800"
                 : shipment.status === "pending"
                 ? "bg-yellow-100 text-yellow-800"
- : shipment.status === "delayed"
+                : shipment.status === "delayed"
                 ? "bg-red-100 text-red-800"
                 : "bg-gray-100 text-gray-800"
             }`}
@@ -118,6 +135,22 @@ export default function ShipmentLabel({ shipment }: ShipmentLabelProps) {
           <p className="text-sm">{shipment.notes}</p>
         </div>
       )}
+
+      {/* Shipper & Delegate */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {shipment.shippers?.name && (
+          <div>
+            <label className="block text-xs font-semibold mb-1">التاجر:</label>
+            <p>{shipment.shippers.name}</p>
+          </div>
+        )}
+        {shipment.delegates?.name && (
+          <div>
+            <label className="block text-xs font-semibold mb-1">المندوب:</label>
+            <p>{shipment.delegates.name}</p>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <div className="border-t pt-2 mt-3 text-center text-xs opacity-60">

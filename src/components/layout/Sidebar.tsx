@@ -34,10 +34,10 @@ const menuItems: MenuItem[] = [
       { icon: Package, label: "كافة الشحنات", path: "/shipments", roles: ["head_manager", "manager", "courier"] },
       { icon: Plus, label: "إضافة شحنة", path: "/add-shipment", roles: ["head_manager", "manager"] },
       { icon: Printer, label: "طباعة البوليصات", path: "/print-label", roles: ["head_manager", "manager"] },
-      { icon: Truck, label: "شحنات المناديب", path: "/courier-shipments", roles: ["head_manager", "manager"] },
-      { icon: Clock, label: "الشحنات المتأخرة", path: "/late-shipments", roles: ["head_manager", "manager"], count: 10 },
-      { icon: RefreshCcw, label: "متابعة المرتجعات", path: "/returned-tracking", roles: ["head_manager", "manager"] },
-      { icon: ScanLine, label: "قراءة الباركود", path: "/scan-shipments", roles: ["head_manager", "manager"] },
+      { icon: Truck, label: "شحنات المناديب", path: "/delegate-shipments", roles: ["head_manager", "manager"] },
+      { icon: Clock, label: "الشحنات المتأخرة", path: "/delayed-shipments", roles: ["head_manager", "manager"] },
+      { icon: RefreshCcw, label: "المرتجعات", path: "/returns", roles: ["head_manager", "manager"] },
+      { icon: ScanLine, label: "قراءة الباركود", path: "/scan", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -47,23 +47,12 @@ const menuItems: MenuItem[] = [
     roles: ["head_manager", "manager", "courier"],
   },
   {
-    icon: FileText,
-    label: "شيتات الشحنات",
-    roles: ["head_manager", "manager"],
-    children: [
-      { icon: FileText, label: "شيتات البيك أب", path: "/sheets/pickup", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات المرتجعات", path: "/sheets/returned", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات المناديب", path: "/sheets/courier", roles: ["head_manager", "manager"] },
-    ]
-  },
-  {
     icon: Wallet,
     label: "الحسابات",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: Wallet, label: "كافة العمليات المالية", path: "/balance", roles: ["head_manager", "manager"] },
-      { icon: Receipt, label: "إضافة عملية مالية", path: "/balance/add", roles: ["head_manager", "manager"] },
-      { icon: BarChart3, label: "تقارير التحصيلات", path: "/balance/collection-report", roles: ["head_manager", "manager"] },
+      { icon: Wallet, label: "إدارة الأرصدة", path: "/balance", roles: ["head_manager", "manager"] },
+      { icon: Receipt, label: "المستندات المالية", path: "/payments", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -71,36 +60,23 @@ const menuItems: MenuItem[] = [
     label: "الأعضاء",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: Users, label: "كافة الأعضاء", path: "/users/members", roles: ["head_manager", "manager"] },
-      { icon: UserCheck, label: "مناديب التوصيل", path: "/users/couriers", roles: ["head_manager", "manager"] },
-      { icon: Shield, label: "الراسلين (التجار)", path: "/users/shippers", roles: ["head_manager", "manager"] },
+      { icon: UserCheck, label: "المناديب", path: "/delegates", roles: ["head_manager", "manager"] },
+      { icon: Shield, label: "التجار", path: "/shippers", roles: ["head_manager", "manager"] },
+      { icon: Users, label: "إدارة المستخدمين", path: "/admin-users", roles: ["head_manager"] },
     ]
   },
   {
-    icon: Bell,
-    label: "الملاحظات والشكاوى",
+    icon: BarChart3,
+    label: "التقارير",
+    path: "/reports",
     roles: ["head_manager", "manager"],
-    count: 17,
-    children: [
-      { icon: MessageSquare, label: "طلبات العملاء", path: "/requests", roles: ["head_manager", "manager"], count: 15 },
-      { icon: Bell, label: "الشكاوى", path: "/complaints", roles: ["head_manager", "manager"], count: 2 },
-    ]
   },
   {
     icon: MapPin,
-    label: "المناطق والفروع",
+    label: "تتبع المناديب",
+    path: "/track-delegates",
     roles: ["head_manager", "manager"],
-    children: [
-      { icon: MapPin, label: "المحافظات والمدن", path: "/places", roles: ["head_manager", "manager"] },
-      { icon: Home, label: "عرض الفروع", path: "/stores", roles: ["head_manager", "manager"] },
-    ]
   },
-  {
-    icon: Settings,
-    label: "إعدادات النظام",
-    path: "/settings",
-    roles: ["head_manager"],
-  }
 ];
 
 const Sidebar = () => {
