@@ -1,4 +1,4 @@
-// src/App.tsx
+// src/App.tsx - الكود الكامل المصحح (انسخه كاملاً واستبدله)
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,7 +26,6 @@ import DelegatesManagement from "./pages/DelegatesManagement";
 import TrackShipment from "./pages/TrackShipment";
 import Auth from "./pages/Auth";
 import AddBalance from "./pages/balance/AddBalance";
-import CollectionReport from "./pages/balance/CollectionReport";
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
@@ -67,6 +66,8 @@ import BotsPage from "./pages/whatsapp/BotsPage";
 import TemplatesPage from "./pages/whatsapp/TemplatesPage";
 import GeneralSettingsPage from "./pages/settings/GeneralSettings";
 import RolesManagementPage from "./pages/settings/RolesManagement";
+import ExportShipmentsPage from "./pages/ExportShipmentsPage";
+import CollectionReportPage from "./pages/balance/CollectionReportPage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -129,7 +130,7 @@ const App = () => (
                     path="collection-report" 
                     element={
                       <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                        <CollectionReport />
+                        <CollectionReportPage />
                       </ProtectedRoute>
                     } 
                   />
@@ -142,6 +143,16 @@ const App = () => (
                     } 
                   />
                 </Route>
+                
+                {/* تصدير الشحنات */}
+                <Route 
+                  path="export-shipments" 
+                  element={
+                    <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
+                      <ExportShipmentsPage />
+                    </ProtectedRoute>
+                  } 
+                />
                 
                 {/* المستندات المالية */}
                 <Route path="payments" element={<PaymentDocuments />} />
@@ -224,7 +235,6 @@ const App = () => (
                 {/* باقي المسارات الأساسية */}
                 <Route path="profile" element={<Profile />} />
                 <Route path="reports" element={<Reports />} />
-                <Route path="export" element={<ExportShipments />} />
                 <Route path="track-delegates" element={<TrackDelegates />} />
                 <Route path="print-labels" element={<PrintLabel />} />
                 <Route path="delegate-dashboard" element={<DelegateDashboard />} />

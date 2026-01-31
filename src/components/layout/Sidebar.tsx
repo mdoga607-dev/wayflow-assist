@@ -43,10 +43,6 @@ const menuItems: MenuItem[] = [
       { icon: Truck, label: "طلبات البيك أب", path: "/app/pickup-requests", roles: ["head_manager", "manager"] },
       { icon: Package, label: "فحص الشحنات", path: "/app/check-shipments", roles: ["head_manager", "manager"] },
       { icon: AlertCircle, label: "شحنات بدون مناطق", path: "/app/shipments-without-areas", roles: ["head_manager", "manager"] },
-      { icon: Printer, label: "طباعة الشحنات", path: "/app/print-shipments", roles: ["head_manager", "manager"] },
-      { icon: BarChart3, label: "تقرير التحصيل", path: "/app/balance/collection-report", roles: ["head_manager", "manager"] },
-      { icon: BarChart3, label: "تقارير التوريد النقدي", path: "/app/balance/payment-report", roles: ["head_manager", "manager"] },
-      { icon: FileTextIcon, label: "تصدير الشحنات اكسل", path: "/app/export-shipments", roles: ["head_manager", "manager"] },
     ]
   },
   {

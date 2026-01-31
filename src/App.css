@@ -40,22 +40,3 @@
 .read-the-docs {
   color: #888;
 }
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  #label-*, #label-* * {
-    visibility: visible;
-  }
-  #label-* {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 10mm;
-    box-shadow: none;
-    border: none !important;
-  }
-}

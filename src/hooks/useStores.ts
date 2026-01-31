@@ -2,33 +2,33 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export const useDelegates = () => {
-  const [delegates, setDelegates] = useState<any[]>([]);
+export const useStores = () => {
+  const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDelegates = async () => {
+    const fetchStores = async () => {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('delegates')
-          .select('id, name, phone, status')
+          .from('stores')
+          .select('id, name, city, status')
           .eq('status', 'active')
           .order('name');
 
         if (error) throw error;
-        setDelegates(data || []);
+        setStores(data || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'فشل جلب المناديب');
-        console.error('Error fetching delegates:', err);
+        setError(err instanceof Error ? err.message : 'فشل جلب المتاجر');
+        console.error('Error fetching stores:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDelegates();
+    fetchStores();
   }, []);
 
-  return { delegates, loading, error };
+  return { stores, loading, error };
 };

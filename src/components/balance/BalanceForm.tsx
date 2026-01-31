@@ -1,5 +1,5 @@
 // src/components/balance/BalanceForm.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,8 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBalance } from '@/hooks/useBalance';
-import { TransactionTypeSelector } from './TransactionTypeSelector';
-import { PaymentMethodSelector } from './PaymentMethodSelector';
+import { useShippers } from '@/hooks/useShippers';
+import { useDelegates } from '@/hooks/useDelegates';
+import { useStores } from '@/hooks/useStores';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, DollarSign, Calendar, FileText, Users, MapPin } from 'lucide-react';
 
@@ -36,7 +37,11 @@ interface BalanceFormProps {
 
 export function BalanceForm({ onSuccess }: BalanceFormProps) {
   const { createTransaction, loading: balanceLoading } = useBalance();
+  const { shippers, loading: shippersLoading, error: shippersError } = useShippers();
+  const { delegates, loading: delegatesLoading, error: delegatesError } = useDelegates();
+  const { stores, loading: storesLoading, error: storesError } = useStores();
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // إعداد النموذج
   const form = useForm<FormData>({
@@ -44,13 +49,32 @@ export function BalanceForm({ onSuccess }: BalanceFormProps) {
     defaultValues: {
       amount: '',
       transaction_type: '',
-      transaction_date: new Date().toISOString().split('T')[0]
+      transaction_date: new Date().toISOString().split('T')[0],
+      shipper_id: 'none',
+      delegate_id: 'none',
+      store_id: 'none',
+      payment_method: '',
+      reference_number: '',
+      notes: ''
     }
   });
+
+  // معالجة الأخطاء من الـ hooks
+  useEffect(() => {
+    if (shippersError || delegatesError || storesError) {
+      setFormError('فشل تحميل البيانات الأساسية. يرجى المحاولة مرة أخرى.');
+      toast({
+        title: "خطأ في التحميل",
+        description: "فشل تحميل بعض البيانات. تأكد من اتصالك بالإنترنت.",
+        variant: "destructive"
+      });
+    }
+  }, [shippersError, delegatesError, storesError]);
 
   // معالجة الإرسال
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
+    setFormError(null);
     
     // تحويل المبلغ إلى رقم
     const amount = parseFloat(data.amount);
@@ -65,7 +89,7 @@ export function BalanceForm({ onSuccess }: BalanceFormProps) {
       return;
     }
 
-    // ✅ الحل: تحويل "none" إلى undefined قبل الإرسال
+    // تحويل "none" إلى undefined قبل الإرسال
     const cleanedData = {
       ...data,
       shipper_id: data.shipper_id === 'none' ? undefined : data.shipper_id,
@@ -104,6 +128,7 @@ export function BalanceForm({ onSuccess }: BalanceFormProps) {
       
       onSuccess?.();
     } else {
+      setFormError(result.error || "حدث خطأ أثناء إضافة العملية المالية");
       toast({
         title: "فشل الإضافة",
         description: result.error || "حدث خطأ أثناء إضافة العملية المالية",
@@ -111,6 +136,31 @@ export function BalanceForm({ onSuccess }: BalanceFormProps) {
       });
     }
   };
+
+  // حالة التحميل الشاملة
+  const isLoading = shippersLoading || delegatesLoading || storesLoading || balanceLoading;
+
+  // إذا كان هناك خطأ جوهري
+  if (formError && !isLoading) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-2xl text-destructive">
+            <FileText className="h-7 w-7" />
+            خطأ في تحميل الصفحة
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 text-center py-8">
+            <p className="text-lg font-medium">{formError}</p>
+            <Button onClick={() => window.location.reload()}>
+              إعادة تحميل الصفحة
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -124,287 +174,313 @@ export function BalanceForm({ onSuccess }: BalanceFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* نوع العملية */}
-            <FormField
-              control={form.control}
-              name="transaction_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    نوع العملية <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <TransactionTypeSelector 
-                      value={field.value} 
-                      onValueChange={field.onChange} 
-                      disabled={submitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* نوع العملية */}
+              <FormField
+                control={form.control}
+                name="transaction_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      نوع العملية <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع العملية" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="payment">دفع</SelectItem>
+                          <SelectItem value="collection">تحصيل</SelectItem>
+                          <SelectItem value="refund">مرتجع</SelectItem>
+                          <SelectItem value="expense">مصروف</SelectItem>
+                          <SelectItem value="transfer">تحويل</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* المبلغ */}
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    المبلغ (ر.س) <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        {...field}
-                        disabled={submitting}
-                        className="pr-12 text-2xl font-bold"
-                        onChange={(e) => {
-                          // السماح فقط بالأرقام والفاصلة العشرية
-                          const value = e.target.value.replace(/[^0-9.]/g, '');
-                          // منع أكثر من فاصلة عشرية واحدة
-                          if ((value.match(/\./g) || []).length > 1) return;
-                          field.onChange(value);
-                        }}
-                      />
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        ر.س
+              {/* المبلغ */}
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      المبلغ (ر.س) <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          {...field}
+                          disabled={submitting}
+                          className="pr-12 text-2xl font-bold"
+                          onChange={(e) => {
+                            // السماح فقط بالأرقام والفاصلة العشرية
+                            const value = e.target.value.replace(/[^0-9.]/g, '');
+                            // منع أكثر من فاصلة عشرية واحدة
+                            if ((value.match(/\./g) || []).length > 1) return;
+                            field.onChange(value);
+                          }}
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                          ر.س
+                        </div>
                       </div>
-                    </div>
-                  </FormControl>
-                  <FormDescription>
-                    أدخل المبلغ بالريال السعودي (يمكن إدخال أرقام عشرية مثل 150.50)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* الطرف المتعامل (تاجر/مندوب/متجر) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="shipper_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      التاجر
-                    </FormLabel>
-                    <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value || 'none'} disabled={submitting}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر تاجراً" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">بدون تاجر</SelectItem>
-                          <SelectItem value="demo1">شركة النور للتجارة</SelectItem>
-                          <SelectItem value="demo2">متجر الفخر الإلكتروني</SelectItem>
-                          <SelectItem value="demo3">محلات السعادة العامة</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </FormControl>
                     <FormDescription>
-                      اختر التاجر المرتبط بالعملية (اختياري)
+                      أدخل المبلغ بالريال السعودي (يمكن إدخال أرقام عشرية مثل 150.50)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="delegate_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      المندوب
-                    </FormLabel>
-                    <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value || 'none'} disabled={submitting}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر مندوباً" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">بدون مندوب</SelectItem>
-                          <SelectItem value="demo1">أحمد محمد</SelectItem>
-                          <SelectItem value="demo2">خالد عبدالله</SelectItem>
-                          <SelectItem value="demo3">محمد سعيد</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      اختر المندوب المرتبط بالعملية (اختياري)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* الطرف المتعامل (تاجر/مندوب/متجر) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="shipper_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        التاجر
+                      </FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر تاجراً" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">بدون تاجر</SelectItem>
+                            {shippers.map((shipper) => (
+                              <SelectItem key={shipper.id} value={shipper.id}>
+                                {shipper.name} {shipper.phone && `(${shipper.phone})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        اختر التاجر المرتبط بالعملية (اختياري)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="store_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      الفرع
-                    </FormLabel>
-                    <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value || 'none'} disabled={submitting}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر فرعاً" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">بدون فرع</SelectItem>
-                          <SelectItem value="demo1">فرع الرياض</SelectItem>
-                          <SelectItem value="demo2">فرع جدة</SelectItem>
-                          <SelectItem value="demo3">فرع الدمام</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      اختر الفرع المرتبط بالعملية (اختياري)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="delegate_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        المندوب
+                      </FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر مندوباً" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">بدون مندوب</SelectItem>
+                            {delegates.map((delegate) => (
+                              <SelectItem key={delegate.id} value={delegate.id}>
+                                {delegate.name} {delegate.phone && `(${delegate.phone})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        اختر المندوب المرتبط بالعملية (اختياري)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* طريقة الدفع والمرجع */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="payment_method"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      طريقة الدفع
-                    </FormLabel>
-                    <FormControl>
-                      <PaymentMethodSelector 
-                        value={field.value} 
-                        onValueChange={field.onChange} 
-                        disabled={submitting}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      اختر طريقة الدفع (نقداً، بنك، إلخ)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="store_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        الفرع
+                      </FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر فرعاً" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">بدون فرع</SelectItem>
+                            {stores.map((store) => (
+                              <SelectItem key={store.id} value={store.id}>
+                                {store.name} {store.city && `(${store.city})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        اختر الفرع المرتبط بالعملية (اختياري)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="reference_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      رقم المرجع
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="رقم الحوالة أو الفاتورة"
-                        {...field}
-                        disabled={submitting}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      أدخل رقم المرجع للحوالة البنكية أو الفاتورة (اختياري)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+              {/* طريقة الدفع والمرجع */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="payment_method"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        طريقة الدفع
+                      </FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={submitting}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر طريقة الدفع" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cash">نقداً</SelectItem>
+                            <SelectItem value="bank_transfer">حوالة بنكية</SelectItem>
+                            <SelectItem value="wallet">محفظة إلكترونية</SelectItem>
+                            <SelectItem value="credit">دفع آجل</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        اختر طريقة الدفع (نقداً، بنك، إلخ)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* التاريخ والملاحظات */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="transaction_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      تاريخ العملية
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        disabled={submitting}
-                        max={new Date().toISOString().split('T')[0]}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      التاريخ الذي تمت فيه العملية (الافتراضي: اليوم)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="reference_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        رقم المرجع
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="رقم الحوالة أو الفاتورة"
+                          {...field}
+                          disabled={submitting}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        أدخل رقم المرجع للحوالة البنكية أو الفاتورة (اختياري)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      ملاحظات
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="أدخل أي ملاحظات إضافية عن العملية المالية..."
-                        {...field}
-                        disabled={submitting}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      ملاحظات إضافية عن العملية (اختياري، الحد الأقصى 500 حرف)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+              {/* التاريخ والملاحظات */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="transaction_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        تاريخ العملية
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          disabled={submitting}
+                          max={new Date().toISOString().split('T')[0]}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        التاريخ الذي تمت فيه العملية (الافتراضي: اليوم)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* زر الإرسال */}
-            <Button 
-              type="submit" 
-              className="w-full text-lg py-6"
-              disabled={submitting || balanceLoading}
-            >
-              {submitting || balanceLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  جاري الإضافة...
-                </>
-              ) : (
-                <>
-                  <DollarSign className="h-5 w-5 mr-2" />
-                  إضافة العملية المالية
-                </>
-              )}
-            </Button>
-          </form>
-        </Form>
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        ملاحظات
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="أدخل أي ملاحظات إضافية عن العملية المالية..."
+                          {...field}
+                          disabled={submitting}
+                          rows={3}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        ملاحظات إضافية عن العملية (اختياري، الحد الأقصى 500 حرف)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* زر الإرسال */}
+              <Button 
+                type="submit" 
+                className="w-full text-lg py-6"
+                disabled={submitting || isLoading}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    جاري الإضافة...
+                  </>
+                ) : (
+                  <>
+                    <DollarSign className="h-5 w-5 mr-2" />
+                    إضافة العملية المالية
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        )}
       </CardContent>
     </Card>
   );

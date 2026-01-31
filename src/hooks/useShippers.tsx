@@ -1,27 +1,34 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
-export interface Shipper {
-  id: string;
-  name: string;
-  phone: string | null;
-  email: string | null;
-  city: string | null;
-  status: string | null;
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useShippers = () => {
-  return useQuery({
-    queryKey: ["shippers"],
-    queryFn: async (): Promise<Shipper[]> => {
-      const { data, error } = await supabase
-        .from("shippers")
-        .select("id, name, phone, email, city, status")
-        .eq("status", "active")
-        .order("name");
+  const [shippers, setShippers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  useEffect(() => {
+    const fetchShippers = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('shippers')
+          .select('id, name, phone, status')
+          .eq('status', 'active')
+          .order('name');
+
+        if (error) throw error;
+        setShippers(data || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'فشل جلب التجار');
+        console.error('Error fetching shippers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShippers();
+  }, []);
+
+  return { shippers, loading, error };
 };

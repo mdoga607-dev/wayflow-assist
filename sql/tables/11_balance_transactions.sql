@@ -1,4 +1,3 @@
--- 1. إنشاء جدول العمليات المالية
 CREATE TABLE IF NOT EXISTS public.balance_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   shipper_id UUID REFERENCES public.shippers(id) ON DELETE SET NULL,
@@ -14,18 +13,3 @@ CREATE TABLE IF NOT EXISTS public.balance_transactions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- 2. تفعيل RLS
-ALTER TABLE public.balance_transactions ENABLE ROW LEVEL SECURITY;
-
--- 3. سياسات الوصول
-DROP POLICY IF EXISTS "Head managers can manage balance transactions" ON public.balance_transactions;
-CREATE POLICY "Head managers can manage balance transactions"
-  ON public.balance_transactions FOR ALL
-  USING (public.has_role(auth.uid(), 'head_manager'))
-  WITH CHECK (public.has_role(auth.uid(), 'head_manager'));
-
-DROP POLICY IF EXISTS "Managers can view balance transactions" ON public.balance_transactions;
-CREATE POLICY "Managers can view balance transactions"
-  ON public.balance_transactions FOR SELECT
-  USING (public.has_role(auth.uid(), 'manager') OR public.has_role(auth.uid(), 'head_manager'));
