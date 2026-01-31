@@ -4,7 +4,8 @@ import {
   Package, Truck, Clock, FileText, Users, MessageSquare, 
   Bell, MapPin, Home, Wallet, LayoutDashboard, Settings,
   ChevronDown, ChevronUp, Plus, ScanLine, RefreshCcw, BarChart3, Receipt, Shield,
-  UserCheck, Printer, UserCircle
+  UserCheck, Printer, UserCircle, Archive, Building2, Layers, AlertCircle,
+  ListChecks, Database, MessageCircle, Bot, AlertTriangle, FileText as FileTextIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,7 +21,6 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-// ✅ التصحيح الكامل: جميع المسارات تبدأ بـ /app حسب هيكل App.tsx
 const menuItems: MenuItem[] = [
   {
     icon: LayoutDashboard,
@@ -40,13 +40,14 @@ const menuItems: MenuItem[] = [
       { icon: Clock, label: "الشحنات المتأخرة", path: "/app/delayed-shipments", roles: ["head_manager", "manager"] },
       { icon: RefreshCcw, label: "المرتجعات", path: "/app/returns", roles: ["head_manager", "manager"] },
       { icon: ScanLine, label: "المسح الضوئي", path: "/app/scan", roles: ["head_manager", "manager"] },
+      { icon: Truck, label: "طلبات البيك أب", path: "/app/pickup-requests", roles: ["head_manager", "manager"] },
+      { icon: Package, label: "فحص الشحنات", path: "/app/check-shipments", roles: ["head_manager", "manager"] },
+      { icon: AlertCircle, label: "شحنات بدون مناطق", path: "/app/shipments-without-areas", roles: ["head_manager", "manager"] },
+      { icon: Printer, label: "طباعة الشحنات", path: "/app/print-shipments", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "تقرير التحصيل", path: "/app/balance/collection-report", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "تقارير التوريد النقدي", path: "/app/balance/payment-report", roles: ["head_manager", "manager"] },
+      { icon: FileTextIcon, label: "تصدير الشحنات اكسل", path: "/app/export-shipments", roles: ["head_manager", "manager"] },
     ]
-  },
-  {
-    icon: UserCircle,
-    label: "لوحة المندوب",
-    path: "/app/delegate-dashboard",
-    roles: ["head_manager", "manager", "courier"],
   },
   {
     icon: FileText,
@@ -55,7 +56,7 @@ const menuItems: MenuItem[] = [
     children: [
       { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
       { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات المناديب", path: "/app/sheets?sheet_type=courier", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات السفر", path: "/app/sheets?sheet_type=travel", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -66,6 +67,7 @@ const menuItems: MenuItem[] = [
       { icon: Wallet, label: "كافة العمليات المالية", path: "/app/balance", roles: ["head_manager", "manager"] },
       { icon: Receipt, label: "إضافة عملية مالية", path: "/app/balance/add", roles: ["head_manager", "manager"] },
       { icon: BarChart3, label: "تقارير التحصيلات", path: "/app/balance/collection-report", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "المستندات المالية", path: "/app/payments", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -76,6 +78,25 @@ const menuItems: MenuItem[] = [
       { icon: UserCheck, label: "المناديب", path: "/app/delegates", roles: ["head_manager", "manager"] },
       { icon: Shield, label: "التجار", path: "/app/shippers", roles: ["head_manager", "manager"] },
       { icon: Users, label: "إدارة المستخدمين", path: "/app/admin-users", roles: ["head_manager"] },
+      { icon: Building2, label: "المتاجر", path: "/app/stores", roles: ["head_manager", "manager"] },
+    ]
+  },
+  {
+    icon: AlertTriangle,
+    label: "الشكاوى",
+    roles: ["head_manager", "manager"],
+    children: [
+      { icon: MessageSquare, label: "كافة الشكاوى", path: "/app/complaints", roles: ["head_manager", "manager"] },
+      { icon: Archive, label: "أرشيف الشكاوى", path: "/app/complaints/archive", roles: ["head_manager", "manager"] },
+    ]
+  },
+  {
+    icon: MapPin,
+    label: "المناطق",
+    roles: ["head_manager", "manager"],
+    children: [
+      { icon: Layers, label: "المحافظات", path: "/app/areas/governorates", roles: ["head_manager", "manager"] },
+      { icon: MapPin, label: "المناطق", path: "/app/areas", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -90,6 +111,56 @@ const menuItems: MenuItem[] = [
     path: "/app/track-delegates",
     roles: ["head_manager", "manager"],
   },
+  {
+    icon: MessageCircle,
+    label: "حملات الواتساب",
+    roles: ["head_manager", "manager"],
+    children: [
+      { icon: MessageCircle, label: "كافة حملات الواتساب", path: "/app/whatsapp/campaigns", roles: ["head_manager", "manager"] },
+      { icon: MessageCircle, label: "حملات الواتس اب (الخاصة بي)", path: "/app/whatsapp/my-campaigns", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "اضافة حملة جديدة", path: "/app/whatsapp/add-campaign", roles: ["head_manager", "manager"] },
+      { icon: Bot, label: "عرض ال Chat Bots", path: "/app/whatsapp/bots", roles: ["head_manager", "manager"] },
+      { icon: FileTextIcon, label: "نصوص الواتس المحفوظة", path: "/app/whatsapp/templates", roles: ["head_manager", "manager"] },
+    ]
+  },
+  {
+    icon: ListChecks,
+    label: "المهام",
+    roles: ["head_manager", "manager"],
+    children: [
+      { icon: ListChecks, label: "كافه التاسكات", path: "/app/tasks", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "اضافة تاسك", path: "/app/tasks/add", roles: ["head_manager", "manager"] },
+    ]
+  },
+  {
+    icon: Database,
+    label: "الجرد",
+    roles: ["head_manager", "manager"],
+    children: [
+      { icon: Database, label: "عمليات جرد الشحنات", path: "/app/inventory", roles: ["head_manager", "manager"] },
+    ]
+  },
+  {
+    icon: Building2,
+    label: "داش بورد الفروع",
+    path: "/app/stores/dashboard", // ✅ تم التصحيح من /app/stores-dashboard
+    roles: ["head_manager", "manager"],
+  },
+  {
+    icon: Clock,
+    label: "تحديد الوقت للفروع",
+    path: "/app/stores/timings", // ✅ تم التصحيح من /app/branch-timings
+    roles: ["head_manager", "manager"],
+  },
+  {
+    icon: Settings,
+    label: "الإعدادات",
+    roles: ["head_manager"],
+    children: [
+      { icon: Settings, label: "إعدادات عامة", path: "/app/settings/general", roles: ["head_manager"] },
+      { icon: Shield, label: "صلاحيات المستخدمين", path: "/app/settings/roles", roles: ["head_manager"] },
+    ]
+  },
 ];
 
 const Sidebar = () => {
@@ -97,7 +168,6 @@ const Sidebar = () => {
   const { role, loading } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-  // تحسين أداء التحقق من الصلاحيات
   const hasAccess = useMemo(() => {
     return (roles: string[]) => {
       if (!role) return false;
@@ -105,25 +175,17 @@ const Sidebar = () => {
     };
   }, [role]);
 
-  // ✅ التصحيح: دالة ذكية لتحديد العنصر النشط (تدعم المسارات والبارامترات)
   const isActivePath = (path?: string) => {
     if (!path) return false;
     
-    // تقسيم المسار إلى جزء المسار وجزء الاستعلام
     const [basePath] = path.split('?');
     
-    // التحقق من تطابق المسار الأساسي
     if (location.pathname === basePath) return true;
-    
-    // التحقق من المسارات الفرعية (مثل /app/balance/add)
     if (location.pathname.startsWith(`${basePath}/`)) return true;
     
-    // التحقق الخاص لشيتات الشحنات (نفس المسار مع بارامترات مختلفة)
     if (basePath === '/app/sheets' && location.pathname === '/app/sheets') {
-      // استخراج sheet_type من الـ URL الحالي
       const currentParams = new URLSearchParams(location.search);
       const targetParams = new URLSearchParams(path.split('?')[1] || '');
-      
       return currentParams.get('sheet_type') === targetParams.get('sheet_type');
     }
     

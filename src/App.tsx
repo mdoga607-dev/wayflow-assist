@@ -44,6 +44,30 @@ import GuestLanding from "./pages/GuestLanding";
 import ShipperPage from "./pages/ShipperPage";
 import CourierDashboard from "./pages/CourierDashboard";
 
+// الصفحات الجديدة
+import PickupRequestsPage from "./pages/PickupRequestsPage";
+import CheckShipmentsPage from "./pages/CheckShipmentsPage";
+import ShipmentsWithoutAreasPage from "./pages/ShipmentsWithoutAreasPage";
+import PrintShipmentsPage from "./pages/PrintShipmentsPage";
+import PaymentReportPage from "./pages/PaymentReportPage";
+import ComplaintsPage from "./pages/complaints/ComplaintsPage";
+import ComplaintsArchivePage from "./pages/complaints/ArchivePage";
+import GovernoratesPage from "./pages/areas/GovernoratesPage";
+import AreasPage from "./pages/areas/AreasPage";
+import TasksPage from "./pages/tasks/TasksPage";
+import AddTaskPage from "./pages/tasks/AddTaskPage";
+import InventoryPage from "./pages/inventory/InventoryPage";
+import StoresPage from "./pages/stores/StoresPage";
+import StoresDashboardPage from "./pages/stores/DashboardPage";
+import BranchTimingsPage from "./pages/stores/TimingsPage";
+import CampaignsPage from "./pages/whatsapp/CampaignsPage";
+import MyCampaignsPage from "./pages/whatsapp/MyCampaignsPage";
+import AddCampaignPage from "./pages/whatsapp/AddCampaignPage";
+import BotsPage from "./pages/whatsapp/BotsPage";
+import TemplatesPage from "./pages/whatsapp/TemplatesPage";
+import GeneralSettingsPage from "./pages/settings/GeneralSettings";
+import RolesManagementPage from "./pages/settings/RolesManagement";
+
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
 
@@ -85,6 +109,10 @@ const App = () => (
                 <Route path="delegate-shipments" element={<DelegateShipments />} />
                 <Route path="returns" element={<Returns />} />
                 <Route path="courier-shipments" element={<CouriersShipments />} />
+                <Route path="pickup-requests" element={<PickupRequestsPage />} />
+                <Route path="check-shipments" element={<CheckShipmentsPage />} />
+                <Route path="shipments-without-areas" element={<ShipmentsWithoutAreasPage />} />
+                <Route path="print-shipments" element={<PrintShipmentsPage />} />
                 
                 {/* الحسابات - هيكل متداخل صحيح */}
                 <Route path="balance">
@@ -102,6 +130,14 @@ const App = () => (
                     element={
                       <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
                         <CollectionReport />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="payment-report" 
+                    element={
+                      <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
+                        <PaymentReportPage />
                       </ProtectedRoute>
                     } 
                   />
@@ -142,7 +178,50 @@ const App = () => (
                   } 
                 />
                 
-                {/* باقي المسارات */}
+                {/* الشكاوى */}
+                <Route path="complaints">
+                  <Route index element={<ComplaintsPage />} />
+                  <Route path="archive" element={<ComplaintsArchivePage />} />
+                </Route>
+                
+                {/* المناطق */}
+                <Route path="areas">
+                  <Route index element={<AreasPage />} />
+                  <Route path="governorates" element={<GovernoratesPage />} />
+                </Route>
+                
+                {/* المهام */}
+                <Route path="tasks">
+                  <Route index element={<TasksPage />} />
+                  <Route path="add" element={<AddTaskPage />} />
+                </Route>
+                
+                {/* الجرد */}
+                <Route path="inventory" element={<InventoryPage />} />
+                
+                {/* المتاجر */}
+                <Route path="stores">
+                  <Route index element={<StoresPage />} />
+                  <Route path="dashboard" element={<StoresDashboardPage />} />
+                  <Route path="timings" element={<BranchTimingsPage />} />
+                </Route>
+                
+                {/* الواتساب */}
+                <Route path="whatsapp">
+                  <Route path="campaigns" element={<CampaignsPage />} />
+                  <Route path="my-campaigns" element={<MyCampaignsPage />} />
+                  <Route path="add-campaign" element={<AddCampaignPage />} />
+                  <Route path="bots" element={<BotsPage />} />
+                  <Route path="templates" element={<TemplatesPage />} />
+                </Route>
+                
+                {/* الإعدادات */}
+                <Route path="settings">
+                  <Route path="general" element={<GeneralSettingsPage />} />
+                  <Route path="roles" element={<RolesManagementPage />} />
+                </Route>
+                
+                {/* باقي المسارات الأساسية */}
                 <Route path="profile" element={<Profile />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="export" element={<ExportShipments />} />

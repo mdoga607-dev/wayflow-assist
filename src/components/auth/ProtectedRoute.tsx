@@ -40,9 +40,9 @@ const ProtectedRoute = ({
   }
 
   // إذا لم يكن المستخدم مسجل دخول
-  if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
+ if (!user) {
+  return <Navigate to="/auth" state={{ from: location }} replace />;
+}
 
   // معالجة المستخدم الضيف (لا يملك أي صلاحيات)
   if (role === 'guest') {
