@@ -1,4 +1,4 @@
-// components/layout/Sidebar.tsx
+// src/components/layout/Sidebar.tsx
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   Package, Truck, Clock, FileText, Users, MessageSquare, 
@@ -20,12 +20,12 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-// ✅ تصحيح 1: إضافة مسارات مفقودة وتنظيم الهيكل
+// ✅ التصحيح الكامل: جميع المسارات تبدأ بـ /app حسب هيكل App.tsx
 const menuItems: MenuItem[] = [
   {
     icon: LayoutDashboard,
     label: "الرئيسية",
-    path: "/dashboard",
+    path: "/app/dashboard",
     roles: ["head_manager", "manager", "courier", "shipper", "user"],
   },
   {
@@ -33,19 +33,19 @@ const menuItems: MenuItem[] = [
     label: "الشحنات",
     roles: ["head_manager", "manager", "courier"],
     children: [
-      { icon: Package, label: "كافة الشحنات", path: "/shipments", roles: ["head_manager", "manager", "courier"] },
-      { icon: Plus, label: "إضافة شحنة", path: "/add-shipment", roles: ["head_manager", "manager"] },
-      { icon: Printer, label: "طباعة البوليصات", path: "/print-label", roles: ["head_manager", "manager"] },
-      { icon: Truck, label: "شحنات المناديب", path: "/courier-shipments", roles: ["head_manager", "manager"] },
-      { icon: Clock, label: "الشحنات المتأخرة", path: "/late-shipments", roles: ["head_manager", "manager"], count: 10 },
-      { icon: RefreshCcw, label: "متابعة المرتجعات", path: "/returned-tracking", roles: ["head_manager", "manager"] },
-      { icon: ScanLine, label: "قراءة الباركود", path: "/scan-shipments", roles: ["head_manager", "manager"] },
+      { icon: Package, label: "كافة الشحنات", path: "/app/shipments", roles: ["head_manager", "manager", "courier"] },
+      { icon: Plus, label: "إضافة شحنة", path: "/app/add-shipment", roles: ["head_manager", "manager"] },
+      { icon: Printer, label: "طباعة البوليصات", path: "/app/print-labels", roles: ["head_manager", "manager"] },
+      { icon: Truck, label: "شحنات المناديب", path: "/app/courier-shipments", roles: ["head_manager", "manager"] },
+      { icon: Clock, label: "الشحنات المتأخرة", path: "/app/delayed-shipments", roles: ["head_manager", "manager"] },
+      { icon: RefreshCcw, label: "المرتجعات", path: "/app/returns", roles: ["head_manager", "manager"] },
+      { icon: ScanLine, label: "المسح الضوئي", path: "/app/scan", roles: ["head_manager", "manager"] },
     ]
   },
   {
     icon: UserCircle,
     label: "لوحة المندوب",
-    path: "/delegate-dashboard",
+    path: "/app/delegate-dashboard",
     roles: ["head_manager", "manager", "courier"],
   },
   {
@@ -53,9 +53,9 @@ const menuItems: MenuItem[] = [
     label: "شيتات الشحنات",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: FileText, label: "شيتات البيك أب", path: "/sheets/pickup", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات المرتجعات", path: "/sheets/returned", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات المناديب", path: "/sheets/courier", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات المناديب", path: "/app/sheets?sheet_type=courier", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -63,9 +63,9 @@ const menuItems: MenuItem[] = [
     label: "الحسابات",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: Wallet, label: "كافة العمليات المالية", path: "/balance", roles: ["head_manager", "manager"] },
-      { icon: Receipt, label: "إضافة عملية مالية", path: "/balance/add", roles: ["head_manager", "manager"] },
-      { icon: BarChart3, label: "تقارير التحصيلات", path: "/balance/collection-report", roles: ["head_manager", "manager"] },
+      { icon: Wallet, label: "كافة العمليات المالية", path: "/app/balance", roles: ["head_manager", "manager"] },
+      { icon: Receipt, label: "إضافة عملية مالية", path: "/app/balance/add", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "تقارير التحصيلات", path: "/app/balance/collection-report", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -73,26 +73,21 @@ const menuItems: MenuItem[] = [
     label: "الأعضاء",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: UserCheck, label: "المناديب", path: "/delegates", roles: ["head_manager", "manager"] },
-      { icon: Shield, label: "التجار", path: "/shippers", roles: ["head_manager", "manager"] },
-      { icon: Users, label: "إدارة المستخدمين", path: "/admin-users", roles: ["head_manager"] },
+      { icon: UserCheck, label: "المناديب", path: "/app/delegates", roles: ["head_manager", "manager"] },
+      { icon: Shield, label: "التجار", path: "/app/shippers", roles: ["head_manager", "manager"] },
+      { icon: Users, label: "إدارة المستخدمين", path: "/app/admin-users", roles: ["head_manager"] },
     ]
   },
   {
     icon: BarChart3,
     label: "التقارير",
-    path: "/reports",
+    path: "/app/reports",
     roles: ["head_manager", "manager"],
-    count: 17,
-    children: [
-      { icon: MessageSquare, label: "طلبات العملاء", path: "/requests", roles: ["head_manager", "manager"], count: 15 },
-      { icon: Bell, label: "الشكاوى", path: "/complaints", roles: ["head_manager", "manager"], count: 2 },
-    ]
   },
   {
     icon: MapPin,
     label: "تتبع المناديب",
-    path: "/track-delegates",
+    path: "/app/track-delegates",
     roles: ["head_manager", "manager"],
   },
 ];
@@ -102,7 +97,7 @@ const Sidebar = () => {
   const { role, loading } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-  // ✅ تصحيح 2: تحسين أداء التحقق من الصلاحيات
+  // تحسين أداء التحقق من الصلاحيات
   const hasAccess = useMemo(() => {
     return (roles: string[]) => {
       if (!role) return false;
@@ -110,17 +105,29 @@ const Sidebar = () => {
     };
   }, [role]);
 
-  // ✅ تصحيح 3: تحسين تحديد العنصر النشط (يدعم المسارات الفرعية)
-  const isActivePath = (path?: string, isParent = false) => {
+  // ✅ التصحيح: دالة ذكية لتحديد العنصر النشط (تدعم المسارات والبارامترات)
+  const isActivePath = (path?: string) => {
     if (!path) return false;
     
-    // للعناصر الرئيسية: تحقق إذا كان المسار الحالي يبدأ بمسار العنصر
-    if (isParent && location.pathname.startsWith(path)) {
-      return true;
+    // تقسيم المسار إلى جزء المسار وجزء الاستعلام
+    const [basePath] = path.split('?');
+    
+    // التحقق من تطابق المسار الأساسي
+    if (location.pathname === basePath) return true;
+    
+    // التحقق من المسارات الفرعية (مثل /app/balance/add)
+    if (location.pathname.startsWith(`${basePath}/`)) return true;
+    
+    // التحقق الخاص لشيتات الشحنات (نفس المسار مع بارامترات مختلفة)
+    if (basePath === '/app/sheets' && location.pathname === '/app/sheets') {
+      // استخراج sheet_type من الـ URL الحالي
+      const currentParams = new URLSearchParams(location.search);
+      const targetParams = new URLSearchParams(path.split('?')[1] || '');
+      
+      return currentParams.get('sheet_type') === targetParams.get('sheet_type');
     }
     
-    // للعناصر الفرعية: تحقق من التطابق الدقيق أو الفرعي
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return false;
   };
 
   const toggleGroup = (label: string) => {
@@ -137,7 +144,6 @@ const Sidebar = () => {
       <ScrollArea className="h-full">
         <nav className="p-4 space-y-1">
           {menuItems.map((item) => {
-            // ✅ تصحيح 4: تخطي العناصر التي ليس لها مسار وليست لها أطفال
             if (!hasAccess(item.roles)) return null;
             if (!item.path && (!item.children || item.children.length === 0)) return null;
             
@@ -172,13 +178,13 @@ const Sidebar = () => {
                       <ChevronDown className="h-4 w-4 text-white/70" />
                     )}
                   </button>
-                ) : item.path ? ( // ✅ تصحيح 5: التأكد من وجود مسار قبل العرض
+                ) : item.path ? (
                   <NavLink
                     to={item.path}
                     end
-                    className={({ isActive }) => cn(
+                    className={({ isActive: navActive }) => cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                      isActive || isActivePath(item.path) 
+                      (navActive || isActivePath(item.path)) 
                         ? "bg-white text-[#d24b60] shadow-xl font-bold" 
                         : "text-white/90 hover:bg-white/10"
                     )}
@@ -204,9 +210,9 @@ const Sidebar = () => {
                           key={child.path}
                           to={child.path}
                           end
-                          className={({ isActive }) => cn(
+                          className={({ isActive: navActive }) => cn(
                             "flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs transition-all",
-                            (isActive || isChildActive) 
+                            (navActive || isChildActive) 
                               ? "bg-white/30 text-white font-bold" 
                               : "text-white/80 hover:bg-white/10"
                           )}

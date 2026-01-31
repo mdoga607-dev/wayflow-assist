@@ -115,7 +115,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
         
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-inner">
-            <span className="text-[#1a7061] font-bold text-xl">ع</span>
+            <span className="text-[#000000] font-bold text-xl">ع</span>
           </div>
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold leading-none">العلماية للشحن</h1>
