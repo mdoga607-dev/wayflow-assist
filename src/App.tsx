@@ -86,7 +86,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/guest" element={<GuestOrders />} />
+                <Route path="/guest/orders" element={<GuestOrders />} />
               <Route path="/track/:trackingNumber" element={<TrackShipment />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -180,15 +180,7 @@ const App = () => (
                 />
                 
                 {/* الشيتات */}
-                <Route 
-                  path="sheets" 
-                  element={
-                    <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                      <SheetsPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
+              <Route path="sheets" element={<SheetsPage />} />              
                 {/* الشكاوى */}
                 <Route path="complaints">
                   <Route index element={<ComplaintsPage />} />

@@ -100,7 +100,7 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
   return (
     <header 
       className="h-16 text-white flex items-center justify-between px-6 shadow-lg z-50 fixed top-0 w-full"
-      style={{ background: 'linear-gradient(90deg, #1a7061 0%, #317896 100%)' }}
+      style={{ background: 'linear-gradient(90deg, #000e0b 0%, #011720 100%)' }}
     >
       {/* القسم الأيمن: القائمة واللوجو */}
       <div className="flex items-center gap-4">

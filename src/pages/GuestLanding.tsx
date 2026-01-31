@@ -22,12 +22,11 @@ export default function GuestLanding() {
             حل متكامل لإدارة الشحنات والتتبع والتحصيلات لتجارك وعملائك
           </p>
           <Button 
-            size="lg" 
-            className="text-lg px-8 py-6 bg-primary hover:bg-primary/90"
-            onClick={() => navigate('/auth')}
-          >
-            ابدأ الآن - مجاني
-          </Button>
+            onClick={() => navigate('/app/dashboard')}
+          className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg font-bold shadow-lg hover:shadow-xl transition-all"
+    >
+         تتبع شحنتي
+      </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">

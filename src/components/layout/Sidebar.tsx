@@ -46,15 +46,17 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-    icon: FileText,
-    label: "شيتات الشحنات",
-    roles: ["head_manager", "manager"],
-    children: [
-      { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات السفر", path: "/app/sheets?sheet_type=travel", roles: ["head_manager", "manager"] },
-    ]
-  },
+  icon: FileText,
+  label: "شيتات الشحنات",
+  roles: ["head_manager", "manager"],
+  children: [
+    { icon: FileText, label: "شيتات المناديب", path: "/app/sheets?sheet_type=courier", roles: ["head_manager", "manager"] },
+    { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
+    { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
+    { icon: FileText, label: "شيتات السفر", path: "/app/sheets?sheet_type=travel", roles: ["head_manager", "manager"] },
+    { icon: FileText, label: "شيتات المرتجعات (سفر)", path: "/app/sheets?sheet_type=returned_travel", roles: ["head_manager", "manager"] },
+  ]
+},
   {
     icon: Wallet,
     label: "الحسابات",
@@ -196,7 +198,7 @@ const Sidebar = () => {
 
   return (
     <aside 
-      className="fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gradient-to-b from-[#d24b60] to-[#a53a4b] z-40 shadow-2xl w-72 border-l border-[#b43f52]" 
+      className="fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gradient-to-b from-[#19026d] to-[#040127] z-40 shadow-2xl w-72 border-l border-[#b43f52]" 
       dir="rtl"
     >
       <ScrollArea className="h-full">
