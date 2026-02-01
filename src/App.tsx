@@ -68,6 +68,10 @@ import GeneralSettingsPage from "./pages/settings/GeneralSettings";
 import RolesManagementPage from "./pages/settings/RolesManagement";
 import ExportShipmentsPage from "./pages/ExportShipmentsPage";
 import CollectionReportPage from "./pages/balance/CollectionReportPage";
+import ProfilePage from "./pages/ProfilePage";
+import AddStorePage from "./pages/stores/AddStorePage";
+import AddShipperPage from "./pages/shippers/AddShipperPage";
+import AddDelegatePage from "./pages/delegates/AddDelegatePage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -180,7 +184,9 @@ const App = () => (
                 />
                 
                 {/* الشيتات */}
-              <Route path="sheets" element={<SheetsPage />} />              
+              
+<Route path="profile" element={<ProfilePage />} />
+<Route path="sheets" element={<SheetsPage />} />
                 {/* الشكاوى */}
                 <Route path="complaints">
                   <Route index element={<ComplaintsPage />} />
@@ -204,11 +210,20 @@ const App = () => (
                 
                 {/* المتاجر */}
                 <Route path="stores">
-                  <Route index element={<StoresPage />} />
-                  <Route path="dashboard" element={<StoresDashboardPage />} />
-                  <Route path="timings" element={<BranchTimingsPage />} />
-                </Route>
-                
+                      <Route index element={<StoresPage />} />
+                    <Route path="add" element={<AddStorePage />} />  {/* ✅ أضف هذا السطر */}
+                    <Route path="dashboard" element={<StoresDashboardPage />} />
+                    <Route path="timings" element={<BranchTimingsPage />} />
+                    </Route>
+              <Route path="delegates">
+                <Route index element={<DelegatesManagement />} />
+                <Route path="add" element={<AddDelegatePage />} />  {/* ✅ أضف هذا السطر */}
+              </Route>
+
+              <Route path="shippers">
+                <Route index element={<ShippersManagement />} />
+                <Route path="add" element={<AddShipperPage />} />  {/* ✅ أضف هذا السطر */}
+              </Route>
                 {/* الواتساب */}
                 <Route path="whatsapp">
                   <Route path="campaigns" element={<CampaignsPage />} />
@@ -225,7 +240,6 @@ const App = () => (
                 </Route>
                 
                 {/* باقي المسارات الأساسية */}
-                <Route path="profile" element={<Profile />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="track-delegates" element={<TrackDelegates />} />
                 <Route path="print-labels" element={<PrintLabel />} />

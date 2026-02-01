@@ -5,13 +5,13 @@ import {
   Bell, MapPin, Home, Wallet, LayoutDashboard, Settings,
   ChevronDown, ChevronUp, Plus, ScanLine, RefreshCcw, BarChart3, Receipt, Shield,
   UserCheck, Printer, UserCircle, Archive, Building2, Layers, AlertCircle,
-  ListChecks, Database, MessageCircle, Bot, AlertTriangle, FileText as FileTextIcon
+  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useMemo } from "react";
-
+import { Button } from "@/components/ui/button";
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -26,6 +26,12 @@ const menuItems: MenuItem[] = [
     icon: LayoutDashboard,
     label: "الرئيسية",
     path: "/app/dashboard",
+    roles: ["head_manager", "manager", "courier", "shipper", "user"],
+  },
+  {
+    icon: UserCircle,
+    label: "الملف الشخصي",
+    path: "/app/profile",
     roles: ["head_manager", "manager", "courier", "shipper", "user"],
   },
   {
@@ -46,17 +52,17 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-  icon: FileText,
-  label: "شيتات الشحنات",
-  roles: ["head_manager", "manager"],
-  children: [
-    { icon: FileText, label: "شيتات المناديب", path: "/app/sheets?sheet_type=courier", roles: ["head_manager", "manager"] },
-    { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
-    { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
-    { icon: FileText, label: "شيتات السفر", path: "/app/sheets?sheet_type=travel", roles: ["head_manager", "manager"] },
-    { icon: FileText, label: "شيتات المرتجعات (سفر)", path: "/app/sheets?sheet_type=returned_travel", roles: ["head_manager", "manager"] },
-  ]
-},
+    icon: FileText,
+    label: "شيتات الشحنات",
+    roles: ["head_manager", "manager"],
+    children: [
+      { icon: FileText, label: "شيتات المناديب", path: "/app/sheets?sheet_type=courier", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات السفر", path: "/app/sheets?sheet_type=travel", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات المرتجعات (سفر)", path: "/app/sheets?sheet_type=returned_travel", roles: ["head_manager", "manager"] },
+    ]
+  },
   {
     icon: Wallet,
     label: "الحسابات",
@@ -73,8 +79,10 @@ const menuItems: MenuItem[] = [
     label: "الأعضاء",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: UserCheck, label: "المناديب", path: "/app/delegates", roles: ["head_manager", "manager"] },
-      { icon: Shield, label: "التجار", path: "/app/shippers", roles: ["head_manager", "manager"] },
+      { icon: UserCheck, label: "كافة المناديب", path: "/app/delegates", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "إضافة مندوب جديد", path: "/app/delegates/add", roles: ["head_manager", "manager"] },
+      { icon: Shield, label: "كافة التجار", path: "/app/shippers", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "إضافة تاجر جديد", path: "/app/shippers/add", roles: ["head_manager", "manager"] },
       { icon: Users, label: "إدارة المستخدمين", path: "/app/admin-users", roles: ["head_manager"] },
       { icon: Building2, label: "المتاجر", path: "/app/stores", roles: ["head_manager", "manager"] },
     ]
@@ -118,7 +126,7 @@ const menuItems: MenuItem[] = [
       { icon: MessageCircle, label: "حملات الواتس اب (الخاصة بي)", path: "/app/whatsapp/my-campaigns", roles: ["head_manager", "manager"] },
       { icon: Plus, label: "اضافة حملة جديدة", path: "/app/whatsapp/add-campaign", roles: ["head_manager", "manager"] },
       { icon: Bot, label: "عرض ال Chat Bots", path: "/app/whatsapp/bots", roles: ["head_manager", "manager"] },
-      { icon: FileTextIcon, label: "نصوص الواتس المحفوظة", path: "/app/whatsapp/templates", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "نصوص الواتس المحفوظة", path: "/app/whatsapp/templates", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -141,13 +149,13 @@ const menuItems: MenuItem[] = [
   {
     icon: Building2,
     label: "داش بورد الفروع",
-    path: "/app/stores/dashboard", // ✅ تم التصحيح من /app/stores-dashboard
+    path: "/app/stores/dashboard",
     roles: ["head_manager", "manager"],
   },
   {
     icon: Clock,
     label: "تحديد الوقت للفروع",
-    path: "/app/stores/timings", // ✅ تم التصحيح من /app/branch-timings
+    path: "/app/stores/timings",
     roles: ["head_manager", "manager"],
   },
   {
@@ -260,35 +268,39 @@ const Sidebar = () => {
                 ) : null}
 
                 {hasChildren && isOpen && (
-                  <div className="mt-1 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
-                    {item.children?.map((child) => {
-                      if (!hasAccess(child.roles) || !child.path) return null;
-                      const isChildActive = isActivePath(child.path);
-                      
-                      return (
-                        <NavLink
-                          key={child.path}
-                          to={child.path}
-                          end
-                          className={({ isActive: navActive }) => cn(
-                            "flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs transition-all",
-                            (navActive || isChildActive) 
-                              ? "bg-white/30 text-white font-bold" 
-                              : "text-white/80 hover:bg-white/10"
-                          )}
-                        >
-                          <child.icon className="h-4 w-4 flex-shrink-0" />
-                          <span className="flex-1">{child.label}</span>
-                          {child.count && (
-                            <span className="bg-white text-[#d24b60] text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                              {child.count}
-                            </span>
-                          )}
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                )}
+  <div className="mt-1 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
+    {item.children?.map((child) => {
+      if (!hasAccess(child.roles) || !child.path) return null;
+      const isChildActive = isActivePath(child.path);
+      
+      return (
+        // ✅ تم التصحيح: استخدام Button مع asChild للقوائم الفرعية
+        <Button
+          key={child.path}
+          asChild
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "w-full justify-start px-4 py-2.5 text-xs",
+            (isChildActive) 
+              ? "bg-white/30 text-white font-bold" 
+              : "text-white/80 hover:bg-white/10"
+          )}
+        >
+          <NavLink to={child.path} end className="w-full flex items-center gap-3">
+            <child.icon className="h-4 w-4 flex-shrink-0" />
+            <span className="flex-1">{child.label}</span>
+            {child.count && (
+              <span className="bg-white text-[#d24b60] text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                {child.count}
+              </span>
+            )}
+          </NavLink>
+        </Button>
+      );
+    })}
+          </div>
+  )}
               </div>
             );
           })}

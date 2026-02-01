@@ -1,6 +1,6 @@
 // src/pages/DelegatesManagement.tsx
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,20 +37,29 @@ const DelegatesManagement = () => {
     const fetchDelegates = async () => {
       try {
         setLoading(true);
+        // ✅ تم التصحيح: استخدام select() الصحيح بدون columns
         const { data, error } = await supabase
           .from('delegates')
-          .select('id, name, phone, city, status, total_delivered, total_delayed')
+          .select(`
+            id,
+            name,
+            phone,
+            city,
+            status,
+            total_delivered,
+            total_delayed,
+            total_returned,
+            balance,
+            commission_due,
+            created_at,
+            updated_at
+          `)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
         setDelegates(data || []);
       } catch (err) {
         console.error('Error fetching delegates:', err);
-        toast({
-          title: "فشل التحميل",
-          description: "حدث خطأ أثناء تحميل قائمة المناديب",
-          variant: "destructive"
-        });
       } finally {
         setLoading(false);
       }
@@ -136,13 +145,13 @@ const DelegatesManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      {/* ✅ الحل الصحيح: استخدام Link مع asChild */}
-                      <Link to={`/app/delegate/${delegate.id}`} asChild>
-                        <Button variant="outline" size="sm">
+                      {/* ✅ تم التصحيح: استخدام Button مع asChild و Link داخله */}
+                      <Button asChild variant="outline" size="sm">
+                        <a href={`/app/delegate/${delegate.id}`}>
                           <Eye className="h-3 w-3 ml-1" />
                           عرض التفاصيل
-                        </Button>
-                      </Link>
+                        </a>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -161,15 +170,6 @@ const DelegatesManagement = () => {
       </Card>
     </div>
   );
-};
-
-// دالة مساعدة للإشعارات (إذا لم تكن موجودة)
-const toast = ({ title, description, variant }: { 
-  title: string; 
-  description?: string; 
-  variant?: 'default' | 'destructive' 
-}) => {
-  console.log(`${variant === 'destructive' ? '❌' : '✅'} ${title}${description ? `: ${description}` : ''}`);
 };
 
 export default DelegatesManagement;

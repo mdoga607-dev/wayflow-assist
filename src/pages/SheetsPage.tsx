@@ -23,12 +23,8 @@ interface Sheet {
   store?: {
     name: string;
   } | null;
-  _count?: {
-    shipments: number;
-  };
 }
 
-// ترجمة أنواع الشيتات
 const sheetTypeLabels: Record<string, string> = {
   courier: 'شيت مناديب',
   returned: 'شيت مرتجعات',
@@ -37,7 +33,6 @@ const sheetTypeLabels: Record<string, string> = {
   returned_travel: 'شيت مرتجعات سفر'
 };
 
-// ألوان أنواع الشيتات
 const sheetTypeColors: Record<string, string> = {
   courier: 'bg-blue-100 text-blue-800',
   returned: 'bg-red-100 text-red-800',
@@ -46,7 +41,6 @@ const sheetTypeColors: Record<string, string> = {
   returned_travel: 'bg-orange-100 text-orange-800'
 };
 
-// ألوان حالات الشيتات
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-800',
   completed: 'bg-blue-100 text-blue-800',
@@ -61,37 +55,32 @@ const SheetsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // الحصول على نوع الشيت من معلمات الاستعلام (الافتراضي: courier)
   const sheetType = searchParams.get('sheet_type') || 'courier';
   
-  // التحقق من الصلاحيات
   useEffect(() => {
     if (!authLoading && role && !['head_manager', 'manager'].includes(role)) {
       navigate('/unauthorized');
     }
   }, [authLoading, role, navigate]);
 
-  // جلب الشيتات من قاعدة البيانات
   useEffect(() => {
     const fetchSheets = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // التحقق من صحة نوع الشيت
         const validTypes = ['courier', 'returned', 'pickup', 'travel', 'returned_travel'];
         if (!validTypes.includes(sheetType)) {
           throw new Error(`نوع الشيت غير صالح: ${sheetType}`);
         }
 
-        // جلب الشيتات مع العدد والمندوب والمتجر
+        // ✅ الحل الصحيح: استخدام الصيغة الصحيحة للـ join بدون !inner
         const { data, error } = await supabase
           .from('sheets')
           .select(`
             *,
-            delegates!inner (name, phone),
-            stores!inner (name),
-            shipments:shipments(count)
+            delegate:delegate_id (name, phone),
+            store:store_id (name)
           `)
           .eq('sheet_type', sheetType)
           .eq('status', 'active')
@@ -102,24 +91,15 @@ const SheetsPage = () => {
           throw error;
         }
         
-        // معالجة العدد
-        const sheetsWithCount = (data || []).map(sheet => ({
-          ...sheet,
-          _count: {
-            shipments: sheet.shipments?.count || 0
-          }
-        }));
-
-        setSheets(sheetsWithCount);
+        setSheets(data || []);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'فشل تحميل الشيتات';
         setError(errorMessage);
         console.error('Error fetching sheets:', err);
         
-        // عرض رسالة للمستخدم
         toast({
           title: "فشل التحميل",
-          description: "حدث خطأ أثناء تحميل الشيتات. تأكد من وجود بيانات في قاعدة البيانات.",
+          description: "حدث خطأ أثناء تحميل الشيتات. تأكد من وجود جدول sheets في قاعدة البيانات.",
           variant: "destructive"
         });
       } finally {
@@ -130,16 +110,12 @@ const SheetsPage = () => {
     fetchSheets();
   }, [sheetType]);
 
-  // معالجة حالة التحميل والخطأ
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
           <p className="mt-4 text-lg font-medium">جاري تحميل {sheetTypeLabels[sheetType] || 'الشيتات'}...</p>
-          <p className="mt-2 text-muted-foreground">
-            نوع الشيت: {sheetTypeLabels[sheetType] || sheetType}
-          </p>
         </div>
       </div>
     );
@@ -175,7 +151,6 @@ const SheetsPage = () => {
 
   return (
     <div className="container py-8 space-y-6" dir="rtl">
-      {/* رأس الصفحة مع نوع الشيت */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
@@ -203,7 +178,6 @@ const SheetsPage = () => {
         </div>
       </div>
 
-      {/* تنبيه إذا لم تكن هناك بيانات */}
       {sheets.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
@@ -239,7 +213,6 @@ const SheetsPage = () => {
         </Card>
       )}
 
-      {/* جدول الشيتات (إذا وجدت) */}
       {sheets.length > 0 && (
         <Card>
           <CardHeader>
@@ -253,8 +226,8 @@ const SheetsPage = () => {
                     <TableHead>اسم الشيت</TableHead>
                     <TableHead>المندوب</TableHead>
                     <TableHead>الفرع</TableHead>
-                    <TableHead>عدد الشحنات</TableHead>
                     <TableHead>تاريخ الإنشاء</TableHead>
+                    <TableHead>النوع</TableHead>
                     <TableHead>الحالة</TableHead>
                     <TableHead className="text-center">الإجراءات</TableHead>
                   </TableRow>
@@ -276,15 +249,17 @@ const SheetsPage = () => {
                       <TableCell>
                         {sheet.store?.name || '-'}
                       </TableCell>
-                      <TableCell className="font-bold text-primary">
-                        {sheet._count?.shipments || 0}
-                      </TableCell>
                       <TableCell>
                         {new Date(sheet.created_at).toLocaleDateString('ar-EG', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
                         })}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={sheetTypeColors[sheet.sheet_type]}>
+                          {sheetTypeLabels[sheet.sheet_type] || sheet.sheet_type}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={statusColors[sheet.status]}>
@@ -294,12 +269,14 @@ const SheetsPage = () => {
                       </TableCell>
                       <TableCell className="text-center">
                         <Button 
+                          asChild 
                           variant="outline" 
                           size="sm"
-                          onClick={() => navigate(`/app/sheets/${sheet.id}`)}
                         >
-                          <Eye className="h-3 w-3 ml-1" />
-                          عرض التفاصيل
+                          <a href={`/app/sheets/${sheet.id}`}>
+                            <Eye className="h-3 w-3 ml-1" />
+                            عرض التفاصيل
+                          </a>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -311,7 +288,6 @@ const SheetsPage = () => {
         </Card>
       )}
 
-      {/* شريط التنقل بين أنواع الشيتات */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-2 justify-center">
