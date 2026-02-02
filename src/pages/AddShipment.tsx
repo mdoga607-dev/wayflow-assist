@@ -24,8 +24,8 @@ import { toast } from "@/hooks/use-toast";
 
 const AddShipment = () => {
   const navigate = useNavigate();
-  const { data: shippers, isLoading: loadingShippers } = useShippers();
-  const { data: delegates, isLoading: loadingDelegates } = useDelegates();
+  const { shippers, loading: loadingShippers } = useShippers();
+  const { delegates, loading: loadingDelegates } = useDelegates();
   const createShipment = useCreateShipment();
 
   // حالة الموقع المحدد من الخريطة
