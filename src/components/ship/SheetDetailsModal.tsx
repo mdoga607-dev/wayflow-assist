@@ -7,8 +7,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Loader2, Printer, Package, Download } from "lucide-react";
-import { useSheets } from "@/hooks/useSheets";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // تعريف أنواع النتائج بشكل صحيح
 interface Shipment {
@@ -40,7 +40,7 @@ interface SheetDetailsModalProps {
 }
 
 const SheetDetailsModal = ({ open, onOpenChange, sheetId }: SheetDetailsModalProps) => {
-  const { getSheetDetails, loading } = useSheets();
+  const [loading, setLoading] = useState(false);
   const [shipments, setShipments] = useState<Shipment[]>([]);
 
   useEffect(() => {
@@ -50,17 +50,48 @@ const SheetDetailsModal = ({ open, onOpenChange, sheetId }: SheetDetailsModalPro
   }, [open, sheetId]);
 
   const loadSheetDetails = async () => {
-    const result = (await getSheetDetails(sheetId)) as SheetDetailsResult;
-    
-    if (result.success) {
-      setShipments(result.shipments);
-    } else {
-      toast({ 
-        title: "خطأ", 
-        description: result.error || "فشل تحميل تفاصيل الشيت",
-        variant: "destructive"
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("shipments")
+        .select(
+          `
+            id,
+            tracking_number,
+            recipient_name,
+            recipient_phone,
+            status,
+            cod_amount,
+            shippers:shipper_id(name)
+          `
+        )
+        .eq("sheet_id", sheetId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: Shipment[] = (data || []).map((s: any) => ({
+        id: s.id,
+        tracking_number: s.tracking_number,
+        recipient_name: s.recipient_name,
+        recipient_phone: s.recipient_phone,
+        status: s.status || "pending",
+        cod_amount: s.cod_amount ?? 0,
+        shipper_name: s.shippers?.name || "",
+      }));
+
+      setShipments(mapped);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "فشل تحميل تفاصيل الشيت";
+      toast({
+        title: "خطأ",
+        description: errorMessage,
+        variant: "destructive",
       });
       onOpenChange(false);
+    } finally {
+      setLoading(false);
     }
   };
 

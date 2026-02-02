@@ -1,711 +1,421 @@
-// src/integrations/supabase/types.ts
-export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
   public: {
     Tables: {
       delegates: {
         Row: {
-          id: string;
-          name: string;
-          phone: string | null;
-          branch: string | null;
-          city: string | null;
-          avatar_url: string | null;
-          store_id: string | null;
-          total_delivered: number;
-          total_delayed: number;
-          total_returned: number;
-          balance: number;
-          commission_due: number;
-          courier_limit: number;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
+          avatar_url: string | null
+          balance: number | null
+          branch: string | null
+          city: string | null
+          commission_due: number | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          status: string | null
+          total_delayed: number | null
+          total_delivered: number | null
+          total_returned: number | null
+          updated_at: string
+          user_id: string | null
+        }
         Insert: {
-          id?: string;
-          name: string;
-          phone?: string | null;
-          branch?: string | null;
-          city?: string | null;
-          avatar_url?: string | null;
-          store_id?: string | null;
-          total_delivered?: number;
-          total_delayed?: number;
-          total_returned?: number;
-          balance?: number;
-          commission_due?: number;
-          courier_limit?: number;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          commission_due?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          status?: string | null
+          total_delayed?: number | null
+          total_delivered?: number | null
+          total_returned?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
         Update: {
-          id?: string;
-          name?: string;
-          phone?: string | null;
-          branch?: string | null;
-          city?: string | null;
-          avatar_url?: string | null;
-          store_id?: string | null;
-          total_delivered?: number;
-          total_delayed?: number;
-          total_returned?: number;
-          balance?: number;
-          commission_due?: number;
-          courier_limit?: number;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      shippers: {
-        Row: {
-          id: string;
-          name: string;
-          phone: string | null;
-          email: string | null;
-          address: string | null;
-          city: string | null;
-          branch: string | null;
-          logo_url: string | null;
-          store_id: string | null;
-          total_shipments: number;
-          active_shipments: number;
-          balance: number;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          phone?: string | null;
-          email?: string | null;
-          address?: string | null;
-          city?: string | null;
-          branch?: string | null;
-          logo_url?: string | null;
-          store_id?: string | null;
-          total_shipments?: number;
-          active_shipments?: number;
-          balance?: number;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          phone?: string | null;
-          email?: string | null;
-          address?: string | null;
-          city?: string | null;
-          branch?: string | null;
-          logo_url?: string | null;
-          store_id?: string | null;
-          total_shipments?: number;
-          active_shipments?: number;
-          balance?: number;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      sheets: {
-        Row: {
-          id: string;
-          name: string;
-          sheet_type: string;
-          delegate_id: string | null;
-          store_id: string | null;
-          status: string;
-          created_at: string;
-          completed_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          sheet_type: string;
-          delegate_id?: string | null;
-          store_id?: string | null;
-          status?: string;
-          created_at?: string;
-          completed_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          sheet_type?: string;
-          delegate_id?: string | null;
-          store_id?: string | null;
-          status?: string;
-          created_at?: string;
-          completed_at?: string | null;
-        };
-      };
-      shipments: {
-        Row: {
-          id: string;
-          tracking_number: string;
-          shipper_id: string | null;
-          delegate_id: string | null;
-          sheet_id: string | null;
-          store_id: string | null;
-          area_id: string | null;
-          recipient_name: string;
-          recipient_phone: string;
-          recipient_address: string;
-          recipient_city: string;
-          recipient_area: string | null;
-          product_name: string | null;
-          cod_amount: number;
-          shipping_fee: number;
-          weight: number | null;
-          notes: string | null;
-          status: string;
-          return_reason: string | null;
-          pickup_requested: boolean;
-          pickup_address: string | null;
-          pickup_time: string | null;
-          delivered_at: string | null;
-          returned_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          tracking_number: string;
-          shipper_id?: string | null;
-          delegate_id?: string | null;
-          sheet_id?: string | null;
-          store_id?: string | null;
-          area_id?: string | null;
-          recipient_name: string;
-          recipient_phone: string;
-          recipient_address: string;
-          recipient_city: string;
-          recipient_area?: string | null;
-          product_name?: string | null;
-          cod_amount?: number;
-          shipping_fee?: number;
-          weight?: number | null;
-          notes?: string | null;
-          status?: string;
-          return_reason?: string | null;
-          pickup_requested?: boolean;
-          pickup_address?: string | null;
-          pickup_time?: string | null;
-          delivered_at?: string | null;
-          returned_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          tracking_number?: string;
-          shipper_id?: string | null;
-          delegate_id?: string | null;
-          sheet_id?: string | null;
-          store_id?: string | null;
-          area_id?: string | null;
-          recipient_name?: string;
-          recipient_phone?: string;
-          recipient_address?: string;
-          recipient_city?: string;
-          recipient_area?: string | null;
-          product_name?: string | null;
-          cod_amount?: number;
-          shipping_fee?: number;
-          weight?: number | null;
-          notes?: string | null;
-          status?: string;
-          return_reason?: string | null;
-          pickup_requested?: boolean;
-          pickup_address?: string | null;
-          pickup_time?: string | null;
-          delivered_at?: string | null;
-          returned_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      stores: {
-        Row: {
-          id: string;
-          name: string;
-          address: string | null;
-          city: string;
-          phone: string | null;
-          manager_id: string | null;
-          is_casual: boolean;
-          central_branch: boolean;
-          operating_days: Json | null;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          address?: string | null;
-          city: string;
-          phone?: string | null;
-          manager_id?: string | null;
-          is_casual?: boolean;
-          central_branch?: boolean;
-          operating_days?: Json | null;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          address?: string | null;
-          city?: string;
-          phone?: string | null;
-          manager_id?: string | null;
-          is_casual?: boolean;
-          central_branch?: boolean;
-          operating_days?: Json | null;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      areas: {
-        Row: {
-          id: string;
-          name: string;
-          governorate: string;
-          city: string;
-          coverage_percentage: number;
-          courier_count: number;
-          status: string;
-          key_words: string[] | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          governorate: string;
-          city: string;
-          coverage_percentage?: number;
-          courier_count?: number;
-          status?: string;
-          key_words?: string[] | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          governorate?: string;
-          city?: string;
-          coverage_percentage?: number;
-          courier_count?: number;
-          status?: string;
-          key_words?: string[] | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
+          avatar_url?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          commission_due?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          status?: string | null
+          total_delayed?: number | null
+          total_delivered?: number | null
+          total_returned?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
-          id: string;
-          user_id: string;
-          full_name: string;
-          phone: string | null;
-          city: string | null;
-          avatar_url: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          avatar_url: string | null
+          city: string | null
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          full_name: string;
-          phone?: string | null;
-          city?: string | null;
-          avatar_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          full_name?: string;
-          phone?: string | null;
-          city?: string | null;
-          avatar_url?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shipments: {
+        Row: {
+          cod_amount: number | null
+          created_at: string
+          current_lat: number | null
+          current_lng: number | null
+          delegate_id: string | null
+          delivered_at: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          id: string
+          notes: string | null
+          product_name: string | null
+          recipient_address: string | null
+          recipient_area: string | null
+          recipient_city: string | null
+          recipient_name: string
+          recipient_phone: string
+          return_reason: string | null
+          returned_at: string | null
+          shipper_id: string | null
+          shipping_fee: number | null
+          status: string | null
+          tracking_number: string
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          cod_amount?: number | null
+          created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          delegate_id?: string | null
+          delivered_at?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          id?: string
+          notes?: string | null
+          product_name?: string | null
+          recipient_address?: string | null
+          recipient_area?: string | null
+          recipient_city?: string | null
+          recipient_name: string
+          recipient_phone: string
+          return_reason?: string | null
+          returned_at?: string | null
+          shipper_id?: string | null
+          shipping_fee?: number | null
+          status?: string | null
+          tracking_number: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          cod_amount?: number | null
+          created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          delegate_id?: string | null
+          delivered_at?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          id?: string
+          notes?: string | null
+          product_name?: string | null
+          recipient_address?: string | null
+          recipient_area?: string | null
+          recipient_city?: string | null
+          recipient_name?: string
+          recipient_phone?: string
+          return_reason?: string | null
+          returned_at?: string | null
+          shipper_id?: string | null
+          shipping_fee?: number | null
+          status?: string | null
+          tracking_number?: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_shipper_id_fkey"
+            columns: ["shipper_id"]
+            isOneToOne: false
+            referencedRelation: "shippers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shippers: {
+        Row: {
+          active_shipments: number | null
+          address: string | null
+          balance: number | null
+          branch: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          total_shipments: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_shipments?: number | null
+          address?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          total_shipments?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_shipments?: number | null
+          address?: string | null
+          balance?: number | null
+          branch?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          total_shipments?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
-          id: string;
-          user_id: string;
-          role: string;
-          created_at: string;
-        };
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          role: string;
-          created_at?: string;
-        };
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          role?: string;
-          created_at?: string;
-        };
-      };
-      balance_transactions: {
-        Row: {
-          id: string;
-          shipper_id: string | null;
-          delegate_id: string | null;
-          store_id: string | null;
-          amount: number;
-          transaction_type: string;
-          payment_method: string | null;
-          reference_number: string | null;
-          notes: string | null;
-          transaction_date: string;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          shipper_id?: string | null;
-          delegate_id?: string | null;
-          store_id?: string | null;
-          amount: number;
-          transaction_type: string;
-          payment_method?: string | null;
-          reference_number?: string | null;
-          notes?: string | null;
-          transaction_date?: string;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          shipper_id?: string | null;
-          delegate_id?: string | null;
-          store_id?: string | null;
-          amount?: number;
-          transaction_type?: string;
-          payment_method?: string | null;
-          reference_number?: string | null;
-          notes?: string | null;
-          transaction_date?: string;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      complaints: {
-        Row: {
-          id: string;
-          shipment_id: string | null;
-          complainant_id: string | null;
-          assigned_to: string | null;
-          complaint_type: string;
-          description: string;
-          status: string;
-          compensation_amount: number;
-          created_at: string;
-          resolved_at: string | null;
-          resolved_by: string | null;
-        };
-        Insert: {
-          id?: string;
-          shipment_id?: string | null;
-          complainant_id?: string | null;
-          assigned_to?: string | null;
-          complaint_type: string;
-          description: string;
-          status?: string;
-          compensation_amount?: number;
-          created_at?: string;
-          resolved_at?: string | null;
-          resolved_by?: string | null;
-        };
-        Update: {
-          id?: string;
-          shipment_id?: string | null;
-          complainant_id?: string | null;
-          assigned_to?: string | null;
-          complaint_type?: string;
-          description?: string;
-          status?: string;
-          compensation_amount?: number;
-          created_at?: string;
-          resolved_at?: string | null;
-          resolved_by?: string | null;
-        };
-      };
-      tasks: {
-        Row: {
-          id: string;
-          title: string;
-          description: string | null;
-          assigned_to: string | null;
-          due_date: string;
-          priority: string;
-          status: string;
-          created_by: string | null;
-          created_at: string;
-          completed_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          description?: string | null;
-          assigned_to?: string | null;
-          due_date: string;
-          priority?: string;
-          status?: string;
-          created_by?: string | null;
-          created_at?: string;
-          completed_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          description?: string | null;
-          assigned_to?: string | null;
-          due_date?: string;
-          priority?: string;
-          status?: string;
-          created_by?: string | null;
-          created_at?: string;
-          completed_at?: string | null;
-        };
-      };
-      whatsapp_campaigns: {
-        Row: {
-          id: string;
-          name: string;
-          campaign_type: string;
-          message_template: string;
-          recipient_list: string[] | null;
-          status: string;
-          scheduled_at: string | null;
-          completed_at: string | null;
-          success_count: number;
-          failure_count: number;
-          created_by: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          campaign_type: string;
-          message_template: string;
-          recipient_list?: string[] | null;
-          status?: string;
-          scheduled_at?: string | null;
-          completed_at?: string | null;
-          success_count?: number;
-          failure_count?: number;
-          created_by?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          campaign_type?: string;
-          message_template?: string;
-          recipient_list?: string[] | null;
-          status?: string;
-          scheduled_at?: string | null;
-          completed_at?: string | null;
-          success_count?: number;
-          failure_count?: number;
-          created_by?: string | null;
-          created_at?: string;
-        };
-      };
-      whatsapp_templates: {
-        Row: {
-          id: string;
-          name: string;
-          category: string;
-          content: string;
-          variables: string[] | null;
-          usage_count: number;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          category: string;
-          content: string;
-          variables?: string[] | null;
-          usage_count?: number;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          category?: string;
-          content?: string;
-          variables?: string[] | null;
-          usage_count?: number;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      whatsapp_bots: {
-        Row: {
-          id: string;
-          name: string;
-          description: string | null;
-          trigger_keywords: string[] | null;
-          response_message: string;
-          status: string;
-          conversation_count: number;
-          last_active: string | null;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          description?: string | null;
-          trigger_keywords?: string[] | null;
-          response_message: string;
-          status?: string;
-          conversation_count?: number;
-          last_active?: string | null;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          description?: string | null;
-          trigger_keywords?: string[] | null;
-          response_message?: string;
-          status?: string;
-          conversation_count?: number;
-          last_active?: string | null;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      inventory_logs: {
-        Row: {
-          id: string;
-          store_id: string | null;
-          performed_by: string | null;
-          item_count: number;
-          discrepancy_count: number;
-          status: string;
-          notes: string | null;
-          performed_at: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          store_id?: string | null;
-          performed_by?: string | null;
-          item_count: number;
-          discrepancy_count?: number;
-          status?: string;
-          notes?: string | null;
-          performed_at?: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          store_id?: string | null;
-          performed_by?: string | null;
-          item_count?: number;
-          discrepancy_count?: number;
-          status?: string;
-          notes?: string | null;
-          performed_at?: string;
-          created_at?: string;
-        };
-      };
-      branch_timings: {
-        Row: {
-          id: string;
-          store_id: string;
-          day_of_week: number;
-          open_time: string;
-          close_time: string;
-          is_closed: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          store_id: string;
-          day_of_week: number;
-          open_time: string;
-          close_time: string;
-          is_closed?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          store_id?: string;
-          day_of_week?: number;
-          open_time?: string;
-          close_time?: string;
-          is_closed?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-    };
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      [_ in never]: never;
-    };
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
     Enums: {
-      app_role: "head_manager" | "manager" | "courier" | "shipper" | "user" | "guest";
-    };
+      app_role: "head_manager" | "user" | "guest"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
+      [_ in never]: never
+    }
+  }
 }
 
-// ✅ Helper Types مبسطة ومضمونة (بدون أخطاء)
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
 export type Tables<
-  TableName extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][TableName]["Row"];
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
-  TableName extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][TableName]["Insert"];
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
-  TableName extends keyof Database["public"]["Tables"]
-> = Database["public"]["Tables"][TableName]["Update"];
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
-export type Enums<EnumName extends keyof Database["public"]["Enums"]> = 
-  Database["public"]["Enums"][EnumName][keyof Database["public"]["Enums"][EnumName]];
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["head_manager", "user", "guest"],
+    },
+  },
+} as const
