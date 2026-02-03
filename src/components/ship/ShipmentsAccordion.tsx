@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Shipment } from '@/hooks/useCouriersShipments';
+import type { Shipment } from '@/hooks/useCouriersShipments';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof ScanLine | typeof Printer; }> = {
   'transit': { label: 'قيد التوصيل', color: 'bg-blue-100 text-blue-800', icon: ScanLine },

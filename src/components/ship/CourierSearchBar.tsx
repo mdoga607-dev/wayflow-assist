@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Delegate, Sheet } from '@/hooks/useCouriersShipments';
+import type { Delegate, Sheet } from '@/hooks/useCouriersShipments';
 
 interface CourierSearchBarProps {
   couriers: Delegate[];

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Package, Printer, ScanLine, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useCouriersShipments } from '@/hooks/useCouriersShipments';
+import { useCouriersShipments, Shipment } from '@/hooks/useCouriersShipments';
 import CourierSearchBar from '@/components/ship/CourierSearchBar';
 import CourierInfoCard from '@/components/ship/CourierInfoCard';
 import ShipmentsAccordion from '@/components/ship/ShipmentsAccordion';
@@ -41,6 +41,17 @@ const CouriersShipments = () => {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [selectedShipments, setSelectedShipments] = useState<string[]>([]);
   const [scanType, setScanType] = useState<'delivery' | 'dispatch' | 'status'>('delivery');
+
+  // ✅ تجميع الشحنات حسب الحالة
+  const groupedShipments = useMemo((): Record<string, Shipment[]> => {
+    const grouped: Record<string, Shipment[]> = {};
+    shipments.forEach((shipment) => {
+      const status = shipment.status || 'pending';
+      if (!grouped[status]) grouped[status] = [];
+      grouped[status].push(shipment);
+    });
+    return grouped;
+  }, [shipments]);
 
   // التحقق من الصلاحيات
   useEffect(() => {
@@ -223,7 +234,7 @@ const CouriersShipments = () => {
       {/* جدول الشحنات */}
       {selectedDelegateId && (
         <ShipmentsAccordion
-          shipments={shipments}
+          shipments={groupedShipments}
           loading={loading}
           onShipmentSelect={(shipmentIds) => setSelectedShipments(shipmentIds)}
           onPrint={() => setIsPrintModalOpen(true)}
@@ -235,7 +246,7 @@ const CouriersShipments = () => {
             navigator.clipboard.writeText(waybills.join('\n'));
             toast({ title: "تم النسخ", description: "تم نسخ أرقام البوليصات إلى الحافظة" });
           }}
-          onExportExcel={(statusName, shipments) => {
+          onExportExcel={(statusName, _shipments) => {
             toast({ title: "جاري التصدير", description: "سيتم تنزيل الملف قريباً" });
           }}
         />
