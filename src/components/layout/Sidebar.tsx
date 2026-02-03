@@ -5,13 +5,14 @@ import {
   Bell, MapPin, Home, Wallet, LayoutDashboard, Settings,
   ChevronDown, ChevronUp, Plus, ScanLine, RefreshCcw, BarChart3, Receipt, Shield,
   UserCheck, Printer, UserCircle, Archive, Building2, Layers, AlertCircle,
-  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info
+  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info, FileSpreadsheet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+// ✅ تم إزالة استيراد Button غير الضروري هنا
+
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -48,7 +49,9 @@ const menuItems: MenuItem[] = [
       { icon: ScanLine, label: "المسح الضوئي", path: "/app/scan", roles: ["head_manager", "manager"] },
       { icon: Truck, label: "طلبات البيك أب", path: "/app/pickup-requests", roles: ["head_manager", "manager"] },
       { icon: Package, label: "فحص الشحنات", path: "/app/check-shipments", roles: ["head_manager", "manager"] },
+      { icon: Package, label: "إدارة الشحنات", path: "/app/shipments-management", roles: ["head_manager", "manager", "courier"] },
       { icon: AlertCircle, label: "شحنات بدون مناطق", path: "/app/shipments-without-areas", roles: ["head_manager", "manager"] },
+      { icon: FileSpreadsheet, label: "رفع Excel", path: "/app/excel-upload", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -154,7 +157,7 @@ const menuItems: MenuItem[] = [
   },
   {
     icon: Clock,
-    label: "تحديد الوقت للفروع",
+    label: "أوقات عمل الفروع",
     path: "/app/stores/timings",
     roles: ["head_manager", "manager"],
   },
@@ -267,40 +270,38 @@ const Sidebar = () => {
                   </NavLink>
                 ) : null}
 
+                {/* ✅ الحل الصحيح: استخدام NavLink مباشرة بدون Button/asChild */}
                 {hasChildren && isOpen && (
-  <div className="mt-1 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
-    {item.children?.map((child) => {
-      if (!hasAccess(child.roles) || !child.path) return null;
-      const isChildActive = isActivePath(child.path);
-      
-      return (
-        // ✅ تم التصحيح: استخدام Button مع asChild للقوائم الفرعية
-        <Button
-          key={child.path}
-          asChild
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "w-full justify-start px-4 py-2.5 text-xs",
-            (isChildActive) 
-              ? "bg-white/30 text-white font-bold" 
-              : "text-white/80 hover:bg-white/10"
-          )}
-        >
-          <NavLink to={child.path} end className="w-full flex items-center gap-3">
-            <child.icon className="h-4 w-4 flex-shrink-0" />
-            <span className="flex-1">{child.label}</span>
-            {child.count && (
-              <span className="bg-white text-[#d24b60] text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                {child.count}
-              </span>
-            )}
-          </NavLink>
-        </Button>
-      );
-    })}
-          </div>
-  )}
+                  <div className="mt-1 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
+                    {item.children?.map((child) => {
+                      if (!hasAccess(child.roles) || !child.path) return null;
+                      const isChildActive = isActivePath(child.path);
+                      
+                      return (
+                        // ✅ تم التصحيح: استخدام NavLink مباشرة بدون Button/asChild
+                        <NavLink
+                          key={child.path}
+                          to={child.path}
+                          end
+                          className={cn(
+                            "flex items-center gap-3 w-full px-4 py-2.5 text-xs rounded-lg transition-all",
+                            isChildActive
+                              ? "bg-white/30 text-white font-bold"
+                              : "text-white/80 hover:bg-white/10"
+                          )}
+                        >
+                          <child.icon className="h-4 w-4 flex-shrink-0" />
+                          <span className="flex-1">{child.label}</span>
+                          {child.count && (
+                            <span className="bg-white text-[#d24b60] text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                              {child.count}
+                            </span>
+                          )}
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

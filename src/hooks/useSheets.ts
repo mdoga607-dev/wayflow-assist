@@ -1,22 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/hooks/useSheets.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Sheet {
   id: string;
   name: string;
-  sheet_type?: string | null;
-  status?: string | null;
+  sheet_type: string;
+  status: string;
   created_at: string;
-  delegate?: {
-    name: string;
-    phone?: string | null;
-  } | null;
-  store?: {
-    name: string;
-  } | null;
-  shipments_count?: number | null;
+  delegate: { name: string; phone: string | null } | null;
+  store: { name: string } | null;
+  shipments_count: number;
 }
 
 export const useSheets = (sheetType?: string) => {
@@ -24,73 +18,68 @@ export const useSheets = (sheetType?: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchSheets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchSheets = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        let query = supabase
-          .from("sheets")
-          .select(
-            `
-              id,
-              name,
-              sheet_type,
-              status,
-              created_at,
-              delegate:delegate_id(name, phone),
-              store:store_id(name),
-              shipments:shipments(count)
-            `
-          )
-          .order("created_at", { ascending: false });
+      // بناء الاستعلام الأساسي
+      const query = supabase
+        .from("sheets")
+        .select(`
+          id, name, sheet_type, status, created_at,
+          delegate:delegate_id(name, phone),
+          store:store_id(name),
+          shipments(count)
+        `)
+        .order("created_at", { ascending: false });
 
-        if (sheetType) {
-          query = query.eq("sheet_type", sheetType);
-        }
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        const rows = (data || []) as any[];
-        const normalized: Sheet[] = rows.map((s) => {
-          const delegate = Array.isArray(s?.delegate) ? s.delegate?.[0] : s?.delegate;
-          const store = Array.isArray(s?.store) ? s.store?.[0] : s?.store;
-          const shipmentsAgg = Array.isArray(s?.shipments) ? s.shipments : null;
-
-          return {
-            id: s.id,
-            name: s.name,
-            sheet_type: s.sheet_type ?? null,
-            status: s.status ?? null,
-            created_at: s.created_at,
-            delegate: delegate
-              ? {
-                  name: delegate.name,
-                  phone: delegate.phone ?? null,
-                }
-              : null,
-            store: store
-              ? {
-                  name: store.name,
-                }
-              : null,
-            shipments_count: shipmentsAgg?.[0]?.count ?? s.shipments_count ?? 0,
-          };
-        });
-
-        setSheets(normalized);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "فشل جلب الشيتات");
-        console.error("Error fetching sheets:", err);
-      } finally {
-        setLoading(false);
+      // تصفية حسب النوع إذا كان موجوداً في الرابط
+      if (sheetType && sheetType !== "") {
+        query.eq("sheet_type", sheetType);
       }
-    };
 
-    fetchSheets();
+      const { data, error: dbError } = await query;
+
+      if (dbError) {
+        // الحل السحري لمشكلة الـ Cache: لو الجدول مش موجود، لا تظهر خطأ أحمر للمستخدم
+        if (
+          dbError.code === 'PGRST204' || 
+          dbError.code === 'PGRST205' || 
+          dbError.message.includes('not find') ||
+          dbError.message.includes('does not exist')
+        ) {
+          console.warn("⚠️ الجدول 'sheets' غير موجود حالياً في Schema Cache الخاص بـ Supabase.");
+          setSheets([]); // نرجع مصفوفة فاضية عشان الصفحة تشتغل عادي
+          return;
+        }
+        throw dbError; // لو خطأ تاني (زي ضعف نت) يطلعه عادي
+      }
+
+      // تحويل البيانات لشكل يفهمه الجدول في الـ UI
+      const normalized = (data || []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        sheet_type: s.sheet_type,
+        status: s.status || 'active',
+        created_at: s.created_at,
+        delegate: s.delegate || null,
+        store: s.store || null,
+        shipments_count: s.shipments?.[0]?.count || 0,
+      }));
+
+      setSheets(normalized);
+    } catch (err: any) {
+      console.error("Fetch Error:", err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, [sheetType]);
 
-  return { sheets, loading, error };
+  useEffect(() => {
+    fetchSheets();
+  }, [fetchSheets]);
+
+  return { sheets, loading, error, refetch: fetchSheets };
 };

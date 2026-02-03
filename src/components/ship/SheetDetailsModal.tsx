@@ -1,202 +1,80 @@
 import { useState, useEffect } from 'react';
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Printer, Package, Download } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-// تعريف أنواع النتائج بشكل صحيح
-interface Shipment {
-  id: string;
-  tracking_number: string;
-  recipient_name: string;
-  recipient_phone: string;
-  status: string;
-  cod_amount?: number;
-  shipper_name: string;
-}
-
-interface SheetDetailsSuccess {
-  success: true;
-  shipments: Shipment[];
-}
-
-interface SheetDetailsError {
-  success: false;
-  error: string;
-}
-
-type SheetDetailsResult = SheetDetailsSuccess | SheetDetailsError;
-
-interface SheetDetailsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  sheetId: string;
-}
-
-const SheetDetailsModal = ({ open, onOpenChange, sheetId }: SheetDetailsModalProps) => {
+const SheetDetailsModal = ({ open, onOpenChange, sheetId }: { open: boolean, onOpenChange: (o: boolean) => void, sheetId: string }) => {
   const [loading, setLoading] = useState(false);
-  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
 
   useEffect(() => {
     if (open && sheetId) {
-      loadSheetDetails();
+      const load = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("shipments")
+          .select(`
+            id, tracking_number, recipient_name, recipient_phone, status, cod_amount,
+            shipper:shipper_id(name)
+          `)
+          .eq("sheet_id", sheetId);
+
+        if (error) {
+          toast({ title: "خطأ", description: "فشل جلب الشحنات", variant: "destructive" });
+        } else {
+          setShipments(data || []);
+        }
+        setLoading(false);
+      };
+      load();
     }
   }, [open, sheetId]);
 
-  const loadSheetDetails = async () => {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("shipments")
-        .select(
-          `
-            id,
-            tracking_number,
-            recipient_name,
-            recipient_phone,
-            status,
-            cod_amount,
-            shippers:shipper_id(name)
-          `
-        )
-        .eq("sheet_id", sheetId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      const mapped: Shipment[] = (data || []).map((s: any) => ({
-        id: s.id,
-        tracking_number: s.tracking_number,
-        recipient_name: s.recipient_name,
-        recipient_phone: s.recipient_phone,
-        status: s.status || "pending",
-        cod_amount: s.cod_amount ?? 0,
-        shipper_name: s.shippers?.name || "",
-      }));
-
-      setShipments(mapped);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "فشل تحميل تفاصيل الشيت";
-      toast({
-        title: "خطأ",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      onOpenChange(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-    toast({ title: "تمت الطباعة", description: "يمكنك طباعة هذه الصفحة من متصفحك" });
-  };
-
-  const handleExport = () => {
-    // تصدير إلى Excel
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "رقم البوليصة,المستلم,الهاتف,الحالة,المبلغ,المرسل\n" +
-      shipments.map(s => 
-        `${s.tracking_number},${s.recipient_name},${s.recipient_phone},${s.status},${s.cod_amount || 0},${s.shipper_name}`
-      ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sheet-${sheetId}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({ title: "تم التصدير", description: "تم تنزيل الملف كـ CSV" });
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" dir="rtl">
+      <DialogContent className="max-w-4xl" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-primary" />
-            تفاصيل الشيت
+          <DialogTitle className="flex items-center gap-2 font-bold">
+            <Package className="text-primary" /> تفاصيل الشحنات داخل الشيت
           </DialogTitle>
         </DialogHeader>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">جاري تحميل تفاصيل الشيت...</p>
-          </div>
+          <div className="flex justify-center py-20"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>
         ) : (
-          <div className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">إجمالي الشحنات: {shipments.length}</p>
-              <p className="font-medium">
-                مبلغ التحصيل الكلي: {shipments.reduce((sum, s) => sum + (s.cod_amount || 0), 0).toLocaleString()} ر.س
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>رقم البوليصة</TableHead>
-                    <TableHead>المستلم</TableHead>
-                    <TableHead>الهاتف</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>المبلغ</TableHead>
-                    <TableHead>المرسل</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {shipments.map((shipment) => (
-                    <TableRow key={shipment.id} className="border-b">
-                      <TableCell className="font-mono font-medium">{shipment.tracking_number}</TableCell>
-                      <TableCell>{shipment.recipient_name}</TableCell>
-                      <TableCell dir="ltr" className="font-mono">{shipment.recipient_phone}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          shipment.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                          shipment.status === 'transit' ? 'bg-blue-100 text-blue-800' :
-                          shipment.status === 'returned' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {shipment.status === 'delivered' ? 'تم التسليم' :
-                           shipment.status === 'transit' ? 'قيد التوصيل' :
-                           shipment.status === 'returned' ? 'مرتجع' : 'أخرى'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {shipment.cod_amount ? `${shipment.cod_amount.toLocaleString()} ر.س` : '-'}
-                      </TableCell>
-                      <TableCell>{shipment.shipper_name}</TableCell>
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="text-right">التتبع</TableHead>
+                  <TableHead className="text-right">المستلم</TableHead>
+                  <TableHead className="text-right">المبلغ</TableHead>
+                  <TableHead className="text-right">التاجر</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {shipments.length === 0 ? (
+                  <TableRow><TableCell colSpan={4} className="text-center py-10 text-muted-foreground">لا توجد شحنات</TableCell></TableRow>
+                ) : (
+                  shipments.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-mono font-bold">{s.tracking_number}</TableCell>
+                      <TableCell>{s.recipient_name}</TableCell>
+                      <TableCell className="text-emerald-600 font-bold">{s.cod_amount} ر.س</TableCell>
+                      <TableCell>{s.shipper?.name || "---"}</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         )}
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            إغلاق
-          </Button>
-          <Button variant="outline" onClick={handleExport} disabled={loading}>
-            <Download className="h-4 w-4 ml-2" />
-            تصدير CSV
-          </Button>
-          <Button onClick={handlePrint} disabled={loading}>
-            <Printer className="h-4 w-4 ml-2" />
-            طباعة
-          </Button>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>إغلاق</Button>
+          <Button onClick={() => window.print()}><Printer className="ml-2 h-4 w-4" /> طباعة</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

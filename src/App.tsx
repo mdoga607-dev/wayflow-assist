@@ -16,10 +16,7 @@ import AddShipment from "./pages/AddShipment";
 import ScanShipments from "./pages/ScanShipments";
 import BalanceManagement from "./pages/BalanceManagement";
 import DelayedShipments from "./pages/DelayedShipments";
-import DelegateShipments from "./pages/DelegateShipments";
-import Reports from "./pages/Reports";
 import Returns from "./pages/Returns";
-import ExportShipments from "./pages/ExportShipments";
 import PaymentDocuments from "./pages/PaymentDocuments";
 import ShippersManagement from "./pages/ShippersManagement";
 import DelegatesManagement from "./pages/DelegatesManagement";
@@ -34,10 +31,7 @@ import TrackDelegates from "./pages/TrackDelegates";
 import DelegateDetails from "./pages/DelegateDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Profile from "./pages/Profile";
 import PrintLabel from "@/components/ship/PrintLabel";
-import DelegateDashboard from "./pages/DelegateDashboard";
-import CouriersShipments from "./components/ship/CouriersShipments";
 import SheetsPage from "./pages/SheetsPage";
 import GuestLanding from "./pages/GuestLanding";
 import ShipperPage from "./pages/ShipperPage";
@@ -72,6 +66,12 @@ import ProfilePage from "./pages/ProfilePage";
 import AddStorePage from "./pages/stores/AddStorePage";
 import AddShipperPage from "./pages/shippers/AddShipperPage";
 import AddDelegatePage from "./pages/delegates/AddDelegatePage";
+import EditProfilePage from "./pages/profile/EditProfilePage";
+import ExcelUploadPage from "./pages/ExcelUploadPage";
+import CourierShipmentsPage from "./pages/CourierShipmentsPage";
+import CouriersShipments from "./components/ship/CouriersShipments";
+import AddPickupRequestPage from "./pages/AddPickupRequestPage";
+import ShipmentsManagementPage from "./pages/ShipmentsManagementPage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -90,7 +90,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/guest/orders" element={<GuestOrders />} />
+              <Route path="/guest/orders" element={<GuestOrders />} />
               <Route path="/track/:trackingNumber" element={<TrackShipment />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -106,144 +106,90 @@ const App = () => (
                 <Route index element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 
-                {/* الشحنات */}
+                {/* ========== الشحنات ========== */}
                 <Route path="shipments" element={<Shipments />} />
                 <Route path="add-shipment" element={<AddShipment />} />
                 <Route path="scan" element={<ScanShipments />} />
                 <Route path="delayed-shipments" element={<DelayedShipments />} />
-                <Route path="delegate-shipments" element={<DelegateShipments />} />
                 <Route path="returns" element={<Returns />} />
+                <Route path="print-shipments" element={<PrintShipmentsPage />} />
                 <Route path="courier-shipments" element={<CouriersShipments />} />
+                <Route path="couriers-shipments" element={<CourierShipmentsPage />} /> {/* ✅ التصحيح: استخدام المكون الصحيح */}
                 <Route path="pickup-requests" element={<PickupRequestsPage />} />
                 <Route path="check-shipments" element={<CheckShipmentsPage />} />
                 <Route path="shipments-without-areas" element={<ShipmentsWithoutAreasPage />} />
-                <Route path="print-shipments" element={<PrintShipmentsPage />} />
+                <Route path="print-labels" element={<PrintLabel />} />
+                <Route path="excel-upload" element={<ExcelUploadPage />} />
+                <Route path="pickup-requests/add" element={<AddPickupRequestPage />} />
+                <Route path="shipments-management" element={<ShipmentsManagementPage />} />
                 
-                {/* الحسابات - هيكل متداخل صحيح */}
-                <Route path="balance">
-                  <Route index element={<BalanceManagement />} />
-                  <Route 
-                    path="add" 
-                    element={
-                      <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                        <AddBalance />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="collection-report" 
-                    element={
-                      <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                        <CollectionReportPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="payment-report" 
-                    element={
-                      <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                        <PaymentReportPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                </Route>
+                {/* ========== الحسابات ========== */}
+                <Route path="balance" element={<BalanceManagement />} />
+                <Route path="balance/add" element={<AddBalance />} />
+                <Route path="balance/collection-report" element={<CollectionReportPage />} />
                 
-                {/* تصدير الشحنات */}
-                <Route 
-                  path="export-shipments" 
-                  element={
-                    <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                      <ExportShipmentsPage />
-                    </ProtectedRoute>
-                  } 
-                />
+                {/* ========== الشيتات ========== */}
+                <Route path="sheets" element={<SheetsPage />} />
                 
-                {/* المستندات المالية */}
-                <Route path="payments" element={<PaymentDocuments />} />
-                
-                {/* التجار والمناديب */}
-                <Route 
-                  path="shippers" 
-                  element={
-                    <ProtectedRoute allowedRoles={['head_manager', 'manager']}>
-                      <ShippersManagement />
-                    </ProtectedRoute>
-                  } 
-                />
+                {/* ========== المناديب ========== */}
                 <Route path="delegates" element={<DelegatesManagement />} />
+                <Route path="delegates/add" element={<AddDelegatePage />} />
                 <Route path="delegate/:id" element={<DelegateDetails />} />
                 
-                {/* إدارة المستخدمين */}
-                <Route 
-                  path="admin-users" 
-                  element={
-                    <ProtectedRoute allowedRoles={['head_manager']}>
-                      <AdminUserManagement />
-                    </ProtectedRoute>
-                  } 
-                />
+                {/* ========== التجار ========== */}
+                <Route path="shippers" element={<ShippersManagement />} />
+                <Route path="shippers/add" element={<AddShipperPage />} />
                 
-                {/* الشيتات */}
-              
-<Route path="profile" element={<ProfilePage />} />
-<Route path="sheets" element={<SheetsPage />} />
-                {/* الشكاوى */}
-                <Route path="complaints">
-                  <Route index element={<ComplaintsPage />} />
-                  <Route path="archive" element={<ComplaintsArchivePage />} />
-                </Route>
+                {/* ========== المتاجر ========== */}
+                <Route path="stores" element={<StoresPage />} />
+                <Route path="stores/add" element={<AddStorePage />} />
+                <Route path="stores/dashboard" element={<StoresDashboardPage />} />
+                <Route path="stores/timings" element={<BranchTimingsPage />} />
                 
-                {/* المناطق */}
-                <Route path="areas">
-                  <Route index element={<AreasPage />} />
-                  <Route path="governorates" element={<GovernoratesPage />} />
-                </Route>
+                {/* ========== الملف الشخصي ========== */}
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="profile/edit" element={<EditProfilePage />} />
                 
-                {/* المهام */}
-                <Route path="tasks">
-                  <Route index element={<TasksPage />} />
-                  <Route path="add" element={<AddTaskPage />} />
-                </Route>
+                {/* ========== الشكاوى ========== */}
+                <Route path="complaints" element={<ComplaintsPage />} />
+                <Route path="complaints/archive" element={<ComplaintsArchivePage />} />
                 
-                {/* الجرد */}
+                {/* ========== المناطق ========== */}
+                <Route path="areas" element={<AreasPage />} />
+                <Route path="areas/governorates" element={<GovernoratesPage />} />
+                
+                {/* ========== المهام ========== */}
+                <Route path="tasks" element={<TasksPage />} />
+                <Route path="tasks/add" element={<AddTaskPage />} />
+                
+                {/* ========== الجرد ========== */}
                 <Route path="inventory" element={<InventoryPage />} />
                 
-                {/* المتاجر */}
-                <Route path="stores">
-                      <Route index element={<StoresPage />} />
-                    <Route path="add" element={<AddStorePage />} />  {/* ✅ أضف هذا السطر */}
-                    <Route path="dashboard" element={<StoresDashboardPage />} />
-                    <Route path="timings" element={<BranchTimingsPage />} />
-                    </Route>
-              <Route path="delegates">
-                <Route index element={<DelegatesManagement />} />
-                <Route path="add" element={<AddDelegatePage />} />  {/* ✅ أضف هذا السطر */}
-              </Route>
-
-              <Route path="shippers">
-                <Route index element={<ShippersManagement />} />
-                <Route path="add" element={<AddShipperPage />} />  {/* ✅ أضف هذا السطر */}
-              </Route>
-                {/* الواتساب */}
-                <Route path="whatsapp">
-                  <Route path="campaigns" element={<CampaignsPage />} />
-                  <Route path="my-campaigns" element={<MyCampaignsPage />} />
-                  <Route path="add-campaign" element={<AddCampaignPage />} />
-                  <Route path="bots" element={<BotsPage />} />
-                  <Route path="templates" element={<TemplatesPage />} />
-                </Route>
-                
-                {/* الإعدادات */}
-                <Route path="settings">
-                  <Route path="general" element={<GeneralSettingsPage />} />
-                  <Route path="roles" element={<RolesManagementPage />} />
-                </Route>
-                
-                {/* باقي المسارات الأساسية */}
-                <Route path="reports" element={<Reports />} />
+                {/* ========== تتبع المناديب ========== */}
                 <Route path="track-delegates" element={<TrackDelegates />} />
-                <Route path="print-labels" element={<PrintLabel />} />
-                <Route path="delegate-dashboard" element={<DelegateDashboard />} />
+                
+                {/* ========== التقارير ========== */}
+                <Route path="reports" element={<PaymentReportPage />} />
+                
+                {/* ========== إدارة المستخدمين (للمدير العام فقط) ========== */}
+                <Route path="admin-users" element={<AdminUserManagement />} />
+                
+                {/* ========== حملات الواتساب ========== */}
+                <Route path="whatsapp/campaigns" element={<CampaignsPage />} />
+                <Route path="whatsapp/my-campaigns" element={<MyCampaignsPage />} />
+                <Route path="whatsapp/add-campaign" element={<AddCampaignPage />} />
+                <Route path="whatsapp/bots" element={<BotsPage />} />
+                <Route path="whatsapp/templates" element={<TemplatesPage />} />
+                
+                {/* ========== الإعدادات (للمدير العام فقط) ========== */}
+                <Route path="settings/general" element={<GeneralSettingsPage />} />
+                <Route path="settings/roles" element={<RolesManagementPage />} />
+                
+                {/* ========== المستندات المالية ========== */}
+                <Route path="payments" element={<PaymentDocuments />} />
+                
+                {/* ========== تصدير الشحنات ========== */}
+                <Route path="export-shipments" element={<ExportShipmentsPage />} />
               </Route>
 
               {/* ========== لوحة التاجر (مسار منفصل) ========== */}
@@ -266,7 +212,7 @@ const App = () => (
                 } 
               />
 
-              {/* صفحة 404 */}
+              {/* ========== صفحة 404 ========== */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
