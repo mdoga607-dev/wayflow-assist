@@ -14,6 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
+      areas: {
+        Row: {
+          created_at: string | null
+          delivery_days: number | null
+          governorate_id: string | null
+          id: string
+          name: string
+          shipping_fee: number | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_days?: number | null
+          governorate_id?: string | null
+          id?: string
+          name: string
+          shipping_fee?: number | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_days?: number | null
+          governorate_id?: string | null
+          id?: string
+          name?: string
+          shipping_fee?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_governorate_id_fkey"
+            columns: ["governorate_id"]
+            isOneToOne: false
+            referencedRelation: "governorates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      balance_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          delegate_id: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          reference_number: string | null
+          shipper_id: string | null
+          status: string | null
+          store_id: string | null
+          transaction_date: string
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          reference_number?: string | null
+          shipper_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          transaction_date?: string
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          reference_number?: string | null
+          shipper_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_transactions_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balance_transactions_shipper_id_fkey"
+            columns: ["shipper_id"]
+            isOneToOne: false
+            referencedRelation: "shippers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          address: string | null
+          city: string | null
+          closing_time: string | null
+          created_at: string | null
+          governorate: string
+          id: string
+          manager_id: string | null
+          name: string
+          opening_time: string | null
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          closing_time?: string | null
+          created_at?: string | null
+          governorate: string
+          id?: string
+          manager_id?: string | null
+          name: string
+          opening_time?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          closing_time?: string | null
+          created_at?: string | null
+          governorate?: string
+          id?: string
+          manager_id?: string | null
+          name?: string
+          opening_time?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       delegates: {
         Row: {
           avatar_url: string | null
@@ -68,6 +220,158 @@ export type Database = {
         }
         Relationships: []
       }
+      governorates: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          delivery_days: number | null
+          id: string
+          name: string
+          name_en: string | null
+          shipping_fee: number | null
+          status: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          delivery_days?: number | null
+          id?: string
+          name: string
+          name_en?: string | null
+          shipping_fee?: number | null
+          status?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          delivery_days?: number | null
+          id?: string
+          name?: string
+          name_en?: string | null
+          shipping_fee?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      inventory: {
+        Row: {
+          branch_id: string | null
+          counted_items: number | null
+          created_at: string | null
+          created_by: string | null
+          delegate_id: string | null
+          discrepancy: number | null
+          id: string
+          inventory_date: string
+          name: string
+          notes: string | null
+          status: string | null
+          store_id: string | null
+          total_items: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          counted_items?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          discrepancy?: number | null
+          id?: string
+          inventory_date?: string
+          name: string
+          notes?: string | null
+          status?: string | null
+          store_id?: string | null
+          total_items?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          counted_items?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          discrepancy?: number | null
+          id?: string
+          inventory_date?: string
+          name?: string
+          notes?: string | null
+          status?: string | null
+          store_id?: string | null
+          total_items?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pickup_requests: {
+        Row: {
+          created_at: string | null
+          delegate_id: string | null
+          id: string
+          items_count: number | null
+          notes: string | null
+          pickup_address: string
+          pickup_time: string | null
+          scheduled_date: string | null
+          shipper_id: string | null
+          status: string | null
+          store_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delegate_id?: string | null
+          id?: string
+          items_count?: number | null
+          notes?: string | null
+          pickup_address: string
+          pickup_time?: string | null
+          scheduled_date?: string | null
+          shipper_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delegate_id?: string | null
+          id?: string
+          items_count?: number | null
+          notes?: string | null
+          pickup_address?: string
+          pickup_time?: string | null
+          scheduled_date?: string | null
+          shipper_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pickup_requests_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pickup_requests_shipper_id_fkey"
+            columns: ["shipper_id"]
+            isOneToOne: false
+            referencedRelation: "shippers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -101,6 +405,69 @@ export type Database = {
         }
         Relationships: []
       }
+      sheets: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          delegate_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          sheet_type: string
+          shipper_id: string | null
+          status: string | null
+          store_id: string | null
+          total_cod: number | null
+          total_shipments: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          sheet_type: string
+          shipper_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          total_cod?: number | null
+          total_shipments?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          sheet_type?: string
+          shipper_id?: string | null
+          status?: string | null
+          store_id?: string | null
+          total_cod?: number | null
+          total_shipments?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sheets_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sheets_shipper_id_fkey"
+            columns: ["shipper_id"]
+            isOneToOne: false
+            referencedRelation: "shippers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipments: {
         Row: {
           cod_amount: number | null
@@ -121,6 +488,7 @@ export type Database = {
           recipient_phone: string
           return_reason: string | null
           returned_at: string | null
+          sheet_id: string | null
           shipper_id: string | null
           shipping_fee: number | null
           status: string | null
@@ -147,6 +515,7 @@ export type Database = {
           recipient_phone: string
           return_reason?: string | null
           returned_at?: string | null
+          sheet_id?: string | null
           shipper_id?: string | null
           shipping_fee?: number | null
           status?: string | null
@@ -173,6 +542,7 @@ export type Database = {
           recipient_phone?: string
           return_reason?: string | null
           returned_at?: string | null
+          sheet_id?: string | null
           shipper_id?: string | null
           shipping_fee?: number | null
           status?: string | null
@@ -186,6 +556,13 @@ export type Database = {
             columns: ["delegate_id"]
             isOneToOne: false
             referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "sheets"
             referencedColumns: ["id"]
           },
           {
@@ -247,6 +624,98 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      stores: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          manager_name: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+          working_hours: Json | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          manager_name?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          working_hours?: Json | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          manager_name?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          working_hours?: Json | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          delegate_id: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delegate_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_delegate_id_fkey"
+            columns: ["delegate_id"]
+            isOneToOne: false
+            referencedRelation: "delegates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
