@@ -1,23 +1,31 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, X } from 'lucide-react';
+import { ListChecks, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 
+interface Delegate {
+  id: string;
+  name: string;
+}
+
 const AddTaskPage = () => {
   const navigate = useNavigate();
   const { role, loading: authLoading } = useAuth();
+  const [delegates, setDelegates] = useState<Delegate[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assignee: '',
+    delegate_id: '',
     dueDate: '',
     priority: 'medium',
   });
@@ -28,22 +36,75 @@ const AddTaskPage = () => {
     }
   }, [authLoading, role, navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchDelegates();
+  }, []);
+
+  const fetchDelegates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('delegates')
+        .select('id, name')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) throw error;
+      setDelegates(data || []);
+    } catch (error: any) {
+      console.error('Error fetching delegates:', error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.title) {
+      toast({
+        title: 'خطأ',
+        description: 'يرجى إدخال عنوان المهمة',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setLoading(true);
-    
-    setTimeout(() => {
-      toast({ title: "تم إنشاء المهمة بنجاح", description: "تم تعيين المهمة للموظف المحدد" });
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          title: formData.title,
+          description: formData.description || null,
+          delegate_id: formData.delegate_id || null,
+          due_date: formData.dueDate || null,
+          priority: formData.priority,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم إنشاء المهمة بنجاح",
+        description: "تم تعيين المهمة للموظف المحدد"
+      });
       navigate('/app/tasks');
+    } catch (error: any) {
+      console.error('Error creating task:', error);
+      toast({
+        title: 'خطأ',
+        description: error.message || 'فشل إنشاء المهمة',
+        variant: 'destructive'
+      });
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent"></div>
+          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
           <p className="mt-4 text-muted-foreground">جاري التحقق من الصلاحيات...</p>
         </div>
       </div>
@@ -94,31 +155,32 @@ const AddTaskPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assignee">تعيين المهمة لـ *</Label>
+              <Label htmlFor="delegate">تعيين المهمة لمندوب</Label>
               <Select 
-                value={formData.assignee} 
-                onValueChange={(value) => setFormData({ ...formData, assignee: value })}
+                value={formData.delegate_id} 
+                onValueChange={(value) => setFormData({ ...formData, delegate_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="اختر الموظف" />
+                  <SelectValue placeholder="اختر المندوب (اختياري)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ahmed">أحمد محمد</SelectItem>
-                  <SelectItem value="khalid">خالد عبدالله</SelectItem>
-                  <SelectItem value="mohammed">محمد سعيد</SelectItem>
+                  {delegates.map((delegate) => (
+                    <SelectItem key={delegate.id} value={delegate.id}>
+                      {delegate.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dueDate">تاريخ الاستحقاق *</Label>
+                <Label htmlFor="dueDate">تاريخ الاستحقاق</Label>
                 <Input
                   id="dueDate"
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -131,6 +193,7 @@ const AddTaskPage = () => {
                     <SelectValue placeholder="اختر الأولوية" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="urgent">عاجل</SelectItem>
                     <SelectItem value="high">عالي</SelectItem>
                     <SelectItem value="medium">متوسط</SelectItem>
                     <SelectItem value="low">منخفض</SelectItem>
@@ -146,7 +209,7 @@ const AddTaskPage = () => {
               <Button type="submit" className="flex-1" disabled={loading}>
                 {loading ? (
                   <>
-                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
                     جاري الإنشاء...
                   </>
                 ) : (
