@@ -2,12 +2,68 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+// ✅ تصدير الـ Types المطلوبة
+export interface Delegate {
+  id: string;
+  name: string;
+  phone?: string;
+  status?: string;
+  store_id?: string;
+  store_name?: string;
+}
+
+export interface Sheet {
+  id: string;
+  name: string;
+  sheet_type: string;
+  delegate_id?: string;
+  store_id?: string;
+  status?: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface Shipment {
+  id: string;
+  tracking_number: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_address?: string;
+  recipient_area?: string;
+  recipient_city?: string;
+  cod_amount?: number;
+  status?: string;
+  created_at: string;
+  product_name?: string;
+  notes?: string;
+  shipper_id?: string;
+  delegate_id?: string;
+  sheet_id?: string;
+  order_id?: string;
+  shipper_name?: string;
+  status_reason?: string;
+  shipping_fee?: number;
+}
+
+export interface CourierInfo {
+  id: string;
+  name: string;
+  phone?: string;
+  store_name?: string;
+  balance: number;
+  debt_balance: number;
+  commission: number;
+  shipments_count: number;
+  courier_limit?: number;
+  shipmentsDeliveredValue?: number;
+}
+
 export const useCouriersShipments = () => {
-  const [delegates, setDelegates] = useState<any[]>([]);
-  const [sheets, setSheets] = useState<any[]>([]);
-  const [returnedSheets, setReturnedSheets] = useState<any[]>([]);
-  const [shipments, setShipments] = useState<any[]>([]);
-  const [courierInfo, setCourierInfo] = useState<any>(null);
+  const [delegates, setDelegates] = useState<Delegate[]>([]);
+  const [sheets, setSheets] = useState<Sheet[]>([]);
+  const [returnedSheets, setReturnedSheets] = useState<Sheet[]>([]);
+  const [shipments, setShipments] = useState<Shipment[]>([]);
+  const [courierInfo, setCourierInfo] = useState<CourierInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +73,7 @@ export const useCouriersShipments = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('delegates')
-        .select('*') // تم إزالة الربط مع المتاجر مؤقتاً لتجنب الخطأ
+        .select('*')
         .order('name');
       
       if (error) throw error;
@@ -39,7 +95,26 @@ export const useCouriersShipments = () => {
         .single();
       
       if (error) throw error;
-      setCourierInfo(data);
+      
+      // حساب عدد الشحنات
+      const { count } = await supabase
+        .from('shipments')
+        .select('*', { count: 'exact', head: true })
+        .eq('delegate_id', delegateId);
+      
+      const courierData: CourierInfo = {
+        id: data.id,
+        name: data.name,
+        phone: data.phone,
+        balance: data.balance || 0,
+        debt_balance: 0,
+        commission: data.commission_due || 0,
+        shipments_count: count || 0,
+        courier_limit: undefined,
+        shipmentsDeliveredValue: 0
+      };
+      
+      setCourierInfo(courierData);
     } catch (err: any) {
       console.error("Error fetching courier info:", err);
     }
@@ -77,7 +152,7 @@ export const useCouriersShipments = () => {
     }
   }, []);
 
-  // 5. جلب الشحنات (أساسي لعرض البيانات في الجدول)
+  // 5. جلب الشحنات
   const fetchShipments = useCallback(async (delegateId: string, sheetId?: string) => {
     try {
       setLoading(true);

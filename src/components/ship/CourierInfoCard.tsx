@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CourierInfo } from '@/hooks/useCouriersShipments';
+import type { CourierInfo } from '@/hooks/useCouriersShipments';
 
 interface CourierInfoCardProps {
   courierInfo: CourierInfo;

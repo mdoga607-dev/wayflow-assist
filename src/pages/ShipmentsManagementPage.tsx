@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Package, Printer, FileSpreadsheet, RefreshCcw, CheckCircle, 
-  AlertCircle, XCircle, Loader2, Copy, Download 
+  Package, Printer, FileSpreadsheet, RefreshCcw, 
+  Loader2, Copy, Plus 
 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Shipment {
   id: string;
@@ -103,17 +104,19 @@ const ShipmentsManagementPage = () => {
 
       // ✅ تجميع الشحنات حسب الحالة
       const grouped: Record<string, Shipment[]> = {};
-      (data || []).forEach((shipment: any) => {
+      const normalizedData: Shipment[] = (data || []).map((shipment: any) => ({
+        ...shipment,
+        recipient_area: shipment.areas?.name || shipment.recipient_area || 'غير معروف',
+        areas: undefined // إزالة الـ areas object لتجنب خطأ TypeScript
+      }));
+      
+      normalizedData.forEach((shipment: Shipment) => {
         const status = shipment.status || 'pending';
         if (!grouped[status]) grouped[status] = [];
-        grouped[status].push({
-          ...shipment,
-          recipient_area: shipment.areas?.name || shipment.recipient_area || 'غير معروف'
-        });
+        grouped[status].push(shipment);
       });
 
-
-        setShipments(data || []);
+      setShipments(normalizedData);
       setGroupedShipments(grouped);
       setSelectedShipments(Object.keys(grouped).reduce((acc, key) => {
         acc[key] = [];
