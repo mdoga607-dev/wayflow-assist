@@ -5,7 +5,7 @@ import {
   Bell, MapPin, Home, Wallet, LayoutDashboard, Settings,
   ChevronDown, ChevronUp, Plus, ScanLine, RefreshCcw, BarChart3, Receipt, Shield,
   UserCheck, Printer, UserCircle, Archive, Building2, Layers, AlertCircle,
-  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info, FileSpreadsheet
+  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info, FileSpreadsheet,Search
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +22,7 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
+// src/components/layout/Sidebar.tsx - الجزء المهم فقط (قائمة menuItems المصححة)
 const menuItems: MenuItem[] = [
   {
     icon: LayoutDashboard,
@@ -32,8 +33,13 @@ const menuItems: MenuItem[] = [
   {
     icon: UserCircle,
     label: "الملف الشخصي",
-    path: "/app/profile",
     roles: ["head_manager", "manager", "courier", "shipper", "user"],
+    children: [
+      { icon: UserCircle, label: "الملف الشخصي", path: "/app/profile", roles: ["head_manager", "manager", "courier", "shipper", "user"] },
+      { icon: Wallet, label: "رصيد المحفظة", path: "/app/profile/wallet", roles: ["head_manager", "manager", "courier", "shipper", "user"] },
+      { icon: Settings, label: "تغيير كلمة المرور", path: "/app/profile/change-password", roles: ["head_manager", "manager", "courier", "shipper", "user"] },
+      { icon: AlertCircle, label: "حذف الحساب", path: "/app/profile/delete-account", roles: ["head_manager", "manager", "courier", "shipper", "user"] },
+    ]
   },
   {
     icon: Package,
@@ -42,16 +48,17 @@ const menuItems: MenuItem[] = [
     children: [
       { icon: Package, label: "كافة الشحنات", path: "/app/shipments", roles: ["head_manager", "manager", "courier"] },
       { icon: Plus, label: "إضافة شحنة", path: "/app/add-shipment", roles: ["head_manager", "manager"] },
-      { icon: Printer, label: "طباعة البوليصات", path: "/app/print-labels", roles: ["head_manager", "manager"] },
+      { icon: ScanLine, label: "فحص الشحنات بالباركود", path: "/app/check-shipments", roles: ["head_manager", "manager"] },
+      { icon: ScanLine, label: "قراءة الباركود", path: "/app/scan", roles: ["head_manager", "manager"] },
+      { icon: Truck, label: "طلبات البيك أب", path: "/app/pickup-requests", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "إضافة طلب بيك أب", path: "/app/pickup-requests/add", roles: ["head_manager", "manager"] },
       { icon: Truck, label: "شحنات المناديب", path: "/app/courier-shipments", roles: ["head_manager", "manager"] },
       { icon: Clock, label: "الشحنات المتأخرة", path: "/app/delayed-shipments", roles: ["head_manager", "manager"] },
       { icon: RefreshCcw, label: "المرتجعات", path: "/app/returns", roles: ["head_manager", "manager"] },
-      { icon: ScanLine, label: "المسح الضوئي", path: "/app/scan", roles: ["head_manager", "manager"] },
-      { icon: Truck, label: "طلبات البيك أب", path: "/app/pickup-requests", roles: ["head_manager", "manager"] },
-      { icon: Package, label: "فحص الشحنات", path: "/app/check-shipments", roles: ["head_manager", "manager"] },
-      { icon: Package, label: "إدارة الشحنات", path: "/app/shipments-management", roles: ["head_manager", "manager", "courier"] },
       { icon: AlertCircle, label: "شحنات بدون مناطق", path: "/app/shipments-without-areas", roles: ["head_manager", "manager"] },
+      { icon: Package, label: "إدارة الشحنات", path: "/app/shipments-management", roles: ["head_manager", "manager", "courier"] },
       { icon: FileSpreadsheet, label: "رفع Excel", path: "/app/excel-upload", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "تصدير الشحنات", path: "/app/export-shipments", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -60,7 +67,8 @@ const menuItems: MenuItem[] = [
     roles: ["head_manager", "manager"],
     children: [
       { icon: FileText, label: "شيتات المناديب", path: "/app/sheets?sheet_type=courier", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets?sheet_type=pickup", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات البيك أب", path: "/app/sheets/pickup", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "إنشاء شيت بيك أب", path: "/app/sheets/create-pickup", roles: ["head_manager", "manager"] },
       { icon: FileText, label: "شيتات المرتجعات", path: "/app/sheets?sheet_type=returned", roles: ["head_manager", "manager"] },
       { icon: FileText, label: "شيتات السفر", path: "/app/sheets?sheet_type=travel", roles: ["head_manager", "manager"] },
       { icon: FileText, label: "شيتات المرتجعات (سفر)", path: "/app/sheets?sheet_type=returned_travel", roles: ["head_manager", "manager"] },
@@ -73,8 +81,9 @@ const menuItems: MenuItem[] = [
     children: [
       { icon: Wallet, label: "كافة العمليات المالية", path: "/app/balance", roles: ["head_manager", "manager"] },
       { icon: Receipt, label: "إضافة عملية مالية", path: "/app/balance/add", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "تقارير التوريدات", path: "/app/balance/payment-report", roles: ["head_manager", "manager"] },
       { icon: BarChart3, label: "تقارير التحصيلات", path: "/app/balance/collection-report", roles: ["head_manager", "manager"] },
-      { icon: FileText, label: "المستندات المالية", path: "/app/payments", roles: ["head_manager", "manager"] },
+      { icon: FileText, label: "شيتات التوريد النقدي", path: "/app/payments", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -87,7 +96,8 @@ const menuItems: MenuItem[] = [
       { icon: Shield, label: "كافة التجار", path: "/app/shippers", roles: ["head_manager", "manager"] },
       { icon: Plus, label: "إضافة تاجر جديد", path: "/app/shippers/add", roles: ["head_manager", "manager"] },
       { icon: Users, label: "إدارة المستخدمين", path: "/app/admin-users", roles: ["head_manager"] },
-      { icon: Building2, label: "المتاجر", path: "/app/stores", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "مؤشرات أداء المناديب", path: "/app/delegates/kpis", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "إحصائيات المناديب", path: "/app/delegates/statistics", roles: ["head_manager", "manager"] },
     ]
   },
   {
@@ -106,19 +116,22 @@ const menuItems: MenuItem[] = [
     children: [
       { icon: Layers, label: "المحافظات", path: "/app/areas/governorates", roles: ["head_manager", "manager"] },
       { icon: MapPin, label: "المناطق", path: "/app/areas", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "تقسيم المناطق", path: "/app/areas/divide", roles: ["head_manager", "manager"] },
+      { icon: Search, label: "الكلمات الدلالية للمناطق", path: "/app/areas/keywords", roles: ["head_manager", "manager"] },
     ]
   },
   {
-    icon: BarChart3,
-    label: "التقارير",
-    path: "/app/reports",
+    icon: Building2,
+    label: "المتاجر",
     roles: ["head_manager", "manager"],
-  },
-  {
-    icon: MapPin,
-    label: "تتبع المناديب",
-    path: "/app/track-delegates",
-    roles: ["head_manager", "manager"],
+    children: [
+      { icon: Building2, label: "عرض المتاجر", path: "/app/stores", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "إضافة متجر", path: "/app/stores/add", roles: ["head_manager", "manager"] },
+      { icon: Database, label: "جرد الشحنات", path: "/app/inventory", roles: ["head_manager", "manager"] },
+      { icon: ListChecks, label: "عمليات جرد الشحنات", path: "/app/inventory/log", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "داش بورد المتاجر", path: "/app/stores/dashboard", roles: ["head_manager", "manager"] },
+      { icon: Clock, label: "أوقات عمل المتاجر", path: "/app/stores/timings", roles: ["head_manager", "manager"] },
+    ]
   },
   {
     icon: MessageCircle,
@@ -137,28 +150,20 @@ const menuItems: MenuItem[] = [
     label: "المهام",
     roles: ["head_manager", "manager"],
     children: [
-      { icon: ListChecks, label: "كافه التاسكات", path: "/app/tasks", roles: ["head_manager", "manager"] },
-      { icon: Plus, label: "اضافة تاسك", path: "/app/tasks/add", roles: ["head_manager", "manager"] },
+      { icon: ListChecks, label: "كافة المهام", path: "/app/tasks", roles: ["head_manager", "manager"] },
+      { icon: Plus, label: "اضافة مهمة", path: "/app/tasks/add", roles: ["head_manager", "manager"] },
     ]
   },
   {
-    icon: Database,
-    label: "الجرد",
-    roles: ["head_manager", "manager"],
-    children: [
-      { icon: Database, label: "عمليات جرد الشحنات", path: "/app/inventory", roles: ["head_manager", "manager"] },
-    ]
-  },
-  {
-    icon: Building2,
-    label: "داش بورد الفروع",
-    path: "/app/stores/dashboard",
+    icon: BarChart3,
+    label: "التقارير",
+    path: "/app/reports",
     roles: ["head_manager", "manager"],
   },
   {
-    icon: Clock,
-    label: "أوقات عمل الفروع",
-    path: "/app/stores/timings",
+    icon: MapPin,
+    label: "تتبع المناديب",
+    path: "/app/track-delegates",
     roles: ["head_manager", "manager"],
   },
   {
@@ -171,7 +176,6 @@ const menuItems: MenuItem[] = [
     ]
   },
 ];
-
 const Sidebar = () => {
   const location = useLocation();
   const { role, loading } = useAuth();

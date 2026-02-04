@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS public.sheets (
 -- 2. تحديث جدول الشحنات لربطه بالشيت بشكل صحيح
 ALTER TABLE public.shipments 
 ADD COLUMN IF NOT EXISTS sheet_id UUID REFERENCES public.sheets(id) ON DELETE SET NULL;
-
 -- 3. تفعيل الحماية RLS لجميع الجداول
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.delegates ENABLE ROW LEVEL SECURITY;

@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { NotificationProvider } from "@/components/notifications/NotificationProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
+import AIBot from "./components/AIBot";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -68,10 +69,15 @@ import AddShipperPage from "./pages/shippers/AddShipperPage";
 import AddDelegatePage from "./pages/delegates/AddDelegatePage";
 import EditProfilePage from "./pages/profile/EditProfilePage";
 import ExcelUploadPage from "./pages/ExcelUploadPage";
-import CourierShipmentsPage from "./pages/CourierShipmentsPage";
-import CouriersShipments from "./components/ship/CouriersShipments";
+import CourierShipmentsPage from "./pages/CourierShipmentsPage"; // ✅ التصحيح: استخدام المكون الصحيح
 import AddPickupRequestPage from "./pages/AddPickupRequestPage";
 import ShipmentsManagementPage from "./pages/ShipmentsManagementPage";
+import CreatePickupSheetPage from "./pages/CreatePickupSheetPage";
+import WalletBalancePage from "./pages/WalletBalancePage";
+import ChangePasswordPage from "./pages/profile/ChangePasswordPage";
+import DeleteAccountPage from "./pages/profile/DeleteAccountPage";
+import PickupSheetsPage from "./pages/PickupSheetsPage";
+import ReportsPage from "./pages/ReportsPage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -113,14 +119,13 @@ const App = () => (
                 <Route path="delayed-shipments" element={<DelayedShipments />} />
                 <Route path="returns" element={<Returns />} />
                 <Route path="print-shipments" element={<PrintShipmentsPage />} />
-                <Route path="courier-shipments" element={<CouriersShipments />} />
-                <Route path="couriers-shipments" element={<CourierShipmentsPage />} /> {/* ✅ التصحيح: استخدام المكون الصحيح */}
+                <Route path="courier-shipments" element={<CourierShipmentsPage />} /> {/* ✅ التصحيح: استخدام المكون الصحيح */}
                 <Route path="pickup-requests" element={<PickupRequestsPage />} />
+                <Route path="pickup-requests/add" element={<AddPickupRequestPage />} />
                 <Route path="check-shipments" element={<CheckShipmentsPage />} />
                 <Route path="shipments-without-areas" element={<ShipmentsWithoutAreasPage />} />
                 <Route path="print-labels" element={<PrintLabel />} />
                 <Route path="excel-upload" element={<ExcelUploadPage />} />
-                <Route path="pickup-requests/add" element={<AddPickupRequestPage />} />
                 <Route path="shipments-management" element={<ShipmentsManagementPage />} />
                 
                 {/* ========== الحسابات ========== */}
@@ -130,6 +135,8 @@ const App = () => (
                 
                 {/* ========== الشيتات ========== */}
                 <Route path="sheets" element={<SheetsPage />} />
+                <Route path="sheets/create-pickup" element={<CreatePickupSheetPage />} />
+                <Route path="sheets/pickup" element={<PickupSheetsPage />} /> {/* ✅ إضافة مسار شيتات البيك أب */}
                 
                 {/* ========== المناديب ========== */}
                 <Route path="delegates" element={<DelegatesManagement />} />
@@ -146,8 +153,11 @@ const App = () => (
                 <Route path="stores/dashboard" element={<StoresDashboardPage />} />
                 <Route path="stores/timings" element={<BranchTimingsPage />} />
                 
-                {/* ========== الملف الشخصي ========== */}
+                {/* ========== الملف الشخصي (مع جميع المسارات الفرعية) ========== */}
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="profile/wallet" element={<WalletBalancePage />} /> {/* ✅ إضافة رصيد المحفظة */}
+                <Route path="profile/change-password" element={<ChangePasswordPage />} /> {/* ✅ إضافة تغيير كلمة المرور */}
+                <Route path="profile/delete-account" element={<DeleteAccountPage />} /> {/* ✅ إضافة حذف الحساب */}
                 <Route path="profile/edit" element={<EditProfilePage />} />
                 
                 {/* ========== الشكاوى ========== */}
@@ -169,7 +179,7 @@ const App = () => (
                 <Route path="track-delegates" element={<TrackDelegates />} />
                 
                 {/* ========== التقارير ========== */}
-                <Route path="reports" element={<PaymentReportPage />} />
+                <Route path="reports" element={<ReportsPage />} />
                 
                 {/* ========== إدارة المستخدمين (للمدير العام فقط) ========== */}
                 <Route path="admin-users" element={<AdminUserManagement />} />
@@ -215,6 +225,7 @@ const App = () => (
               {/* ========== صفحة 404 ========== */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <AIBot />
           </BrowserRouter>
         </TooltipProvider>
       </NotificationProvider>

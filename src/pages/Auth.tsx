@@ -1,3 +1,4 @@
+// src/pages/Auth.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,13 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, User, Lock, Mail, Phone, Eye, EyeOff, ArrowLeft, CheckCircle } from "lucide-react";
+import { 
+  Package, User, Lock, Mail, Phone, Eye, EyeOff, 
+  ArrowLeft, CheckCircle, Truck, AlertCircle 
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signupStep, setSignupStep] = useState<'form' | 'verification'>('form');
+  const [accountType, setAccountType] = useState<'courier' | 'shipper' | 'guest'>('guest'); // ✅ حالة نوع الحساب
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,11 +68,27 @@ const Auth = () => {
       return;
     }
 
+    // ✅ الحصول على دور المستخدم من الميتاداتا
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', data.user.id)
+      .single();
+
     toast({ 
       title: "مرحباً بك", 
       description: "تم تسجيل الدخول بنجاح" 
     });
-    navigate("/");
+    
+    // ✅ توجيه المستخدم حسب دوره
+    if (profile?.role === 'courier') {
+      navigate("/courier-dashboard");
+    } else if (profile?.role === 'shipper') {
+      navigate("/shipper-dashboard");
+    } else {
+      navigate("/app/dashboard");
+    }
+    
     setIsLoading(false);
   };
 
@@ -98,32 +119,86 @@ const Auth = () => {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email: signupEmail,
-      password: signupPassword,
-      options: {
-        data: { 
-          full_name: signupFullName, 
-          phone: signupPhone 
-        },
-      },
-    });
-
-    if (error) {
+    // ✅ التحقق من اختيار نوع الحساب
+    if (accountType === 'courier' && !signupPhone) {
       toast({ 
         title: "خطأ", 
-        description: error.message, 
+        description: "رقم الهاتف مطلوب للمناديب", 
         variant: "destructive" 
       });
-    } else {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: { 
+            full_name: signupFullName, 
+            phone: signupPhone,
+            role: accountType // ✅ حفظ نوع الحساب في الميتاداتا
+          },
+        },
+      });
+
+      if (error) {
+        // ✅ رسائل خطأ مخصصة لأنواع مختلفة من الأخطاء
+        if (error.message.includes('already registered')) {
+          toast({ 
+            title: "الحساب موجود مسبقاً", 
+            description: "هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول.",
+            variant: "destructive" 
+          });
+        } else if (error.message.includes('Email rate limit exceeded')) {
+          toast({ 
+            title: "تم تجاوز الحد", 
+            description: "تم إرسال العديد من طلبات التسجيل. يرجى المحاولة لاحقاً.",
+            variant: "destructive" 
+          });
+        } else {
+          toast({ 
+            title: "خطأ في التسجيل", 
+            description: error.message, 
+            variant: "destructive" 
+          });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // ✅ إنشاء السجل في جدول المستخدمين بعد التسجيل
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('user_roles')
+          .insert([{
+            user_id: data.user.id,
+            role: accountType
+          }]);
+
+        if (profileError) {
+          console.error('Error creating user role:', profileError);
+          // لا نوقف التسجيل لكن نسجل الخطأ
+        }
+      }
+
       setVerificationEmail(signupEmail);
       setSignupStep('verification');
       toast({
         title: "تحقق من بريدك الإلكتروني",
         description: "تم إرسال رابط تفعيل إلى بريدك الإلكتروني. يرجى الضغط عليه لتفعيل الحساب.",
       });
+    } catch (err) {
+      console.error('Signup error:', err);
+      toast({ 
+        title: "خطأ غير متوقع", 
+        description: "حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleResendVerification = async () => {
@@ -136,13 +211,13 @@ const Auth = () => {
     if (error) {
       toast({ 
         title: "خطأ", 
-        description: "فشل في إعادة إرسال رسالة التفعيل", 
+        description: "فشل في إعادة إرسال رسالة التفعيل. تحقق من اتصالك بالإنترنت.", 
         variant: "destructive" 
       });
     } else {
       toast({ 
         title: "تم الإرسال", 
-        description: "تم إعادة إرسال رسالة التفعيل إلى بريدك الإلكتروني" 
+        description: "تم إعادة إرسال رسالة التفعيل إلى بريدك الإلكتروني. تحقق من مجلد الرسائل غير المرغوب فيها." 
       });
     }
     setIsLoading(false);
@@ -152,6 +227,20 @@ const Auth = () => {
     navigate('/forgot-password');
   };
 
+  // ✅ دالة لعرض وصف نوع الحساب
+  const getAccountTypeDescription = () => {
+    switch(accountType) {
+      case 'courier':
+        return "ستتمكن من توصيل الشحنات ومتابعة المهام اليومية وإدارة جدول التوصيل.";
+      case 'shipper':
+        return "ستتمكن من إرسال الشحنات وتتبعها وإدارة طلبات البيك أب وعرض التقارير.";
+      case 'guest':
+        return "ستتمكن من تتبع شحناتك فقط عبر رقم التتبع دون الحاجة لحساب كامل.";
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-md">
@@ -159,7 +248,7 @@ const Auth = () => {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Package className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">نظام الشحنات</h1>
+          <h1 className="text-3xl font-bold text-foreground">نظام أمان للشحن</h1>
           <p className="text-sm text-muted-foreground mt-2">إدارة الشحنات المتكاملة</p>
         </div>
 
@@ -277,9 +366,74 @@ const Auth = () => {
                           dir="ltr" 
                           value={signupPhone} 
                           onChange={(e)=>setSignupPhone(e.target.value)} 
-                          required 
+                          required={accountType === 'courier'} // ✅ إلزامي للمناديب فقط
                           className="pl-10"
                         />
+                      </div>
+                      {accountType === 'courier' && (
+                        <p className="text-xs text-blue-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          رقم الهاتف إلزامي للمناديب للتواصل الفعّال
+                        </p>
+                      )}
+                    </div>
+
+                    {/* ✅ قسم اختيار نوع الحساب - المطلوب في السؤال */}
+                    <div className="space-y-2 mb-6">
+                      <Label>نوع الحساب</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div 
+                          className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                            accountType === 'courier' 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-muted hover:border-primary/50'
+                          }`}
+                          onClick={() => setAccountType('courier')}
+                        >
+                          <Truck className="h-8 w-8 mx-auto mb-2 text-primary" />
+                          <div className="text-center font-medium">مندوب</div>
+                          <p className="text-xs text-muted-foreground mt-1 text-center">
+                            لتوصيل الشحنات وإدارة المهام
+                          </p>
+                        </div>
+                        
+                        <div 
+                          className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                            accountType === 'shipper' 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-muted hover:border-primary/50'
+                          }`}
+                          onClick={() => setAccountType('shipper')}
+                        >
+                          <Package className="h-8 w-8 mx-auto mb-2 text-primary" />
+                          <div className="text-center font-medium">تاجر</div>
+                          <p className="text-xs text-muted-foreground mt-1 text-center">
+                            لإرسال الشحنات وإدارة الطلبات
+                          </p>
+                        </div>
+                        
+                        <div 
+                          className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                            accountType === 'guest' 
+                              ? 'border-primary bg-primary/5' 
+                              : 'border-muted hover:border-primary/50'
+                          }`}
+                          onClick={() => setAccountType('guest')}
+                        >
+                          <User className="h-8 w-8 mx-auto mb-2 text-primary" />
+                          <div className="text-center font-medium">ضيف</div>
+                          <p className="text-xs text-muted-foreground mt-1 text-center">
+                            لتتبع الشحنات فقط
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* ✅ عرض وصف مخصص لنوع الحساب المختار */}
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-blue-700">{getAccountTypeDescription()}</p>
+                        </div>
                       </div>
                     </div>
 
@@ -308,6 +462,12 @@ const Auth = () => {
                     >
                       {isLoading ? "جاري التسجيل..." : "إنشاء الحساب"}
                     </Button>
+                    
+                    <div className="text-center pt-2">
+                      <p className="text-xs text-muted-foreground">
+                        بالتسجيل، أنت توافق على <a href="#" className="text-primary hover:underline">شروط الخدمة</a> و <a href="#" className="text-primary hover:underline">سياسة الخصوصية</a>
+                      </p>
+                    </div>
                   </form>
                 ) : (
                   <div className="space-y-6 text-center py-8">
@@ -347,6 +507,17 @@ const Auth = () => {
                         disabled={isLoading}
                       >
                         {isLoading ? "جاري الإرسال..." : "إعادة إرسال رسالة التفعيل"}
+                      </Button>
+                    </div>
+                    
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={() => navigate('/auth')}
+                        variant="link"
+                        className="text-sm"
+                      >
+                        <ArrowLeft className="h-3 w-3 ml-1" />
+                        العودة لصفحة تسجيل الدخول
                       </Button>
                     </div>
                   </div>
