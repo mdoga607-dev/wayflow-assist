@@ -743,6 +743,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_shipment_by_tracking: {
+        Args: { p_phone_last_4: string; p_tracking_number: string }
+        Returns: {
+          cod_amount: number
+          created_at: string
+          delivered_at: string
+          id: string
+          recipient_city: string
+          recipient_name: string
+          shipping_fee: number
+          status: string
+          tracking_number: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

@@ -33,21 +33,20 @@ interface Shipment {
 const GuestOrders = () => {
   const navigate = useNavigate();
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phoneLast4, setPhoneLast4] = useState('');
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchMode, setSearchMode] = useState<'tracking' | 'phone'>('tracking');
 
-  // دالة البحث عن الشحنة
+  // دالة البحث عن الشحنة - باستخدام الدالة الآمنة
   const searchShipment = async () => {
-    if (!trackingNumber.trim() && searchMode === 'tracking') {
+    if (!trackingNumber.trim()) {
       toast({ title: "يرجى إدخال رقم البوليصة", variant: "destructive" });
       return;
     }
 
-    if (!phone.trim() && searchMode === 'phone') {
-      toast({ title: "يرجى إدخال رقم الهاتف", variant: "destructive" });
+    if (!phoneLast4.trim() || phoneLast4.length !== 4) {
+      toast({ title: "يرجى إدخال آخر 4 أرقام من رقم الهاتف", variant: "destructive" });
       return;
     }
 
@@ -56,36 +55,35 @@ const GuestOrders = () => {
     setShipment(null);
 
     try {
-      let query = supabase
-        .from('shipments')
-        .select(`
-          *,
-          delegate:delegate_id (name, phone)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (searchMode === 'tracking') {
-        // البحث برقم البوليصة (بدون حساسية للأحرف الكبيرة/الصغيرة)
-        query = query.ilike('tracking_number', `%${trackingNumber.trim()}%`);
-      } else {
-        // البحث برقم الهاتف (بدون المسافات أو الشرطات)
-        const cleanPhone = phone.trim().replace(/[\s\-+]/g, '');
-        query = query.ilike('recipient_phone', `%${cleanPhone}%`);
-      }
-
-      const { data, error } = await query;
+      // استخدام الدالة الآمنة للبحث
+      const { data, error } = await supabase.rpc('get_shipment_by_tracking', {
+        p_tracking_number: trackingNumber.trim().toUpperCase(),
+        p_phone_last_4: phoneLast4.trim()
+      });
 
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        setError(searchMode === 'tracking' 
-          ? 'لم يتم العثور على شحنة بهذا الرقم. تأكد من صحة الرقم وحاول مرة أخرى.'
-          : 'لم يتم العثور على شحنات بهذا الرقم. تأكد من صحة الرقم وحاول مرة أخرى.');
+        setError('لم يتم العثور على شحنة. تأكد من صحة رقم البوليصة وآخر 4 أرقام من الهاتف.');
         return;
       }
 
-      setShipment(data[0]);
+      // تحويل البيانات للشكل المطلوب
+      const shipmentData: Shipment = {
+        id: data[0].id,
+        tracking_number: data[0].tracking_number,
+        recipient_name: data[0].recipient_name,
+        recipient_phone: '****' + phoneLast4, // إخفاء الرقم للخصوصية
+        recipient_address: '', // لا نعرض العنوان الكامل للضيوف
+        recipient_city: data[0].recipient_city || '',
+        cod_amount: data[0].cod_amount || 0,
+        status: data[0].status || 'pending',
+        created_at: data[0].created_at,
+        delivered_at: data[0].delivered_at,
+        delegate: null // لا نعرض بيانات المندوب للضيوف
+      };
+
+      setShipment(shipmentData);
     } catch (err) {
       console.error('Error searching shipment:', err);
       setError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى لاحقاً.');
@@ -281,90 +279,54 @@ const GuestOrders = () => {
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold">ابحث عن شحنتك</CardTitle>
             <CardDescription className="mt-2 max-w-md mx-auto">
-              اختر طريقة البحث المناسبة لك
+              أدخل رقم البوليصة وآخر 4 أرقام من رقم الهاتف للتحقق
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* مفاتيح التبديل بين طرق البحث */}
-              <div className="flex justify-center gap-4">
-                <Button
-                  variant={searchMode === 'tracking' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSearchMode('tracking');
-                    setPhone('');
-                  }}
-                  className={searchMode === 'tracking' ? 'bg-primary hover:bg-primary/90' : ''}
-                >
-                  <Package className="h-4 w-4 ml-2" />
-                  بالبوليصة
-                </Button>
-                <Button
-                  variant={searchMode === 'phone' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSearchMode('phone');
-                    setTrackingNumber('');
-                  }}
-                  className={searchMode === 'phone' ? 'bg-primary hover:bg-primary/90' : ''}
-                >
-                  <Phone className="h-4 w-4 ml-2" />
-                  برقم الهاتف
-                </Button>
-              </div>
-
               {/* حقول الإدخال */}
               <div className="space-y-4">
-                {searchMode === 'tracking' ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="tracking-number" className="flex items-center gap-2">
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                      رقم البوليصة
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="tracking-number"
-                        value={trackingNumber}
-                        onChange={(e) => setTrackingNumber(e.target.value.trim().toUpperCase())}
-                        onKeyPress={handleKeyPress}
-                        placeholder="أدخل رقم البوليصة (مثال: ABC123456)"
-                        className="pr-12 text-lg font-mono"
-                        dir="ltr"
-                      />
-                      <Search 
-                        className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer"
-                        onClick={searchShipment}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ⚠️ تأكد من إدخال الرقم بشكل صحيح. مثال: ABC123456 أو TEST123456
-                    </p>
+                <div className="space-y-2">
+                  <Label htmlFor="tracking-number" className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    رقم البوليصة
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="tracking-number"
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value.trim().toUpperCase())}
+                      onKeyPress={handleKeyPress}
+                      placeholder="أدخل رقم البوليصة (مثال: ABC123456)"
+                      className="pr-12 text-lg font-mono"
+                      dir="ltr"
+                    />
+                    <Search 
+                      className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer"
+                      onClick={searchShipment}
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      رقم الهاتف
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="phone"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="أدخل رقم الهاتف (مثال: 01012345678)"
-                        className="pr-12 text-lg"
-                        dir="ltr"
-                      />
-                      <Search 
-                        className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer"
-                        onClick={searchShipment}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ⚠️ أدخل الرقم كاملاً مع كود الدولة (مثال: 966501234567 أو 01012345678)
-                    </p>
-                  </div>
-                )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="phone-last4" className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    آخر 4 أرقام من رقم الهاتف
+                  </Label>
+                  <Input
+                    id="phone-last4"
+                    value={phoneLast4}
+                    onChange={(e) => setPhoneLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    onKeyPress={handleKeyPress}
+                    placeholder="مثال: 5678"
+                    className="text-lg font-mono text-center"
+                    dir="ltr"
+                    maxLength={4}
+                  />
+                  <p className="text-xs text-muted-foreground text-center">
+                    ⚠️ للتحقق من هويتك، أدخل آخر 4 أرقام من رقم هاتف المستلم
+                  </p>
+                </div>
               </div>
 
               {/* زر البحث */}
