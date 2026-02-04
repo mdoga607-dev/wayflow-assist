@@ -49,7 +49,7 @@ const ChangePasswordPage = () => {
     }
 
     let strength = 0;
-    const messages = [];
+    const messages: string[] = [];
 
     // الطول
     if (newPassword.length >= 8) strength += 25;
