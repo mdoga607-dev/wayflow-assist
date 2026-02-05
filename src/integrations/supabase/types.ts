@@ -743,6 +743,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_unconfirmed_users: { Args: never; Returns: number }
       get_shipment_by_tracking: {
         Args: { p_phone_last_4: string; p_tracking_number: string }
         Returns: {
