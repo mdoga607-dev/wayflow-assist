@@ -138,7 +138,7 @@ const StoresDashboardPage = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      const {  data: todayData, error: todayError } = await supabase
+      const { count: todayCount, error: todayError } = await supabase
         .from('shipments')
         .select('id', { count: 'exact', head: true })
         .gte('created_at', today.toISOString());
@@ -146,7 +146,7 @@ const StoresDashboardPage = () => {
       if (todayError) throw todayError;
       
       // حساب الشحنات المعلقة
-      const {  data: pendingData, error: pendingError } = await supabase
+      const { count: pendingCount, error: pendingError } = await supabase
         .from('shipments')
         .select('id', { count: 'exact', head: true })
         .in('status', ['pending', 'transit']);
@@ -157,16 +157,16 @@ const StoresDashboardPage = () => {
       const lastWeek = new Date();
       lastWeek.setDate(lastWeek.getDate() - 7);
       
-      const {  data: lastWeekData, error: lastWeekError } = await supabase
+      const { count: lastWeekCount, error: lastWeekError } = await supabase
         .from('shipments')
         .select('id', { count: 'exact', head: true })
         .gte('created_at', lastWeek.toISOString())
         .lt('created_at', today.toISOString());
       if (lastWeekError) throw lastWeekError;
       
-      const lastWeekCount = lastWeekData?.count || 0;
-      const growthRate = lastWeekCount > 0 
-        ? Math.round(((todayData?.count || 0) - lastWeekCount) / lastWeekCount * 100) 
+      const actualLastWeekCount = lastWeekCount || 0;
+      const growthRate = actualLastWeekCount > 0 
+        ? Math.round(((todayCount || 0) - actualLastWeekCount) / actualLastWeekCount * 100) 
         : 0;
 
       setBranches(branchesData || []);
@@ -179,8 +179,8 @@ const StoresDashboardPage = () => {
         totalDelegates,
         totalRevenue,
         totalGovernorates: governoratesData?.length || 0,
-        todayShipments: todayData?.count || 0,
-        pendingShipments: pendingData?.count || 0,
+        todayShipments: todayCount || 0,
+        pendingShipments: pendingCount || 0,
         growthRate
       });
     } catch (error: any) {
