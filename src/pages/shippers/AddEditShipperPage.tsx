@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/shippers/AddEditShipperPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,25 +11,20 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, Phone, Mail, MapPin, Building2, CheckCircle, AlertCircle, Loader2, 
-  XCircle, Info, Store, Save, RefreshCcw, Edit3
+  XCircle, Info, Store, Save, ChevronLeft, Edit
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 
-// Schema موحد للإضافة والتعديل
 const formSchema = z.object({
   name: z.string().min(2, 'اسم التاجر مطلوب').max(100, 'الاسم طويل جداً'),
-  phone: z.string()
-    .regex(/^01[0125][0-9]{8}$/, 'رقم التليفون مش صح (مثال: 01012345678)'),
+  phone: z.string().regex(/^01[0125][0-9]{8}$/, 'رقم التليفون مش صح (مثال: 01012345678)').optional().or(z.literal('')),
   email: z.string().email('البريد الإلكتروني مش صح').optional().or(z.literal('')),
-  address: z.string().min(5, 'العنوان مطلوب').max(200, 'العنوان طويل جداً'),
+  address: z.string().optional(),
   city: z.string().min(2, 'المدينة مطلوبة').max(50, 'المدينة طويلة جداً'),
   branch: z.string().optional(),
   status: z.string().default('active'),
@@ -44,9 +38,8 @@ const AddEditShipperPage = () => {
   const { role, loading: authLoading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loadingShipper, setLoadingShipper] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [shipperData, setShipperData] = useState<any>(null);
+  const [loadingShipper, setLoadingShipper] = useState(false);
 
   // التحقق من الصلاحيات
   useEffect(() => {
@@ -82,8 +75,6 @@ const AddEditShipperPage = () => {
         .single();
 
       if (error) throw error;
-      
-      setShipperData(data);
       
       // ملء النموذج ببيانات التاجر
       form.reset({
@@ -128,7 +119,6 @@ const AddEditShipperPage = () => {
     }
   });
 
-  // دالة الإرسال (إضافة أو تعديل)
   const onSubmit = async (data: FormData) => {
     setSubmitting(true);
     setError(null);
@@ -136,9 +126,9 @@ const AddEditShipperPage = () => {
     try {
       const shipperPayload = {
         name: data.name.trim(),
-        phone: data.phone.trim(),
+        phone: data.phone?.trim() || null,
         email: data.email?.trim() || null,
-        address: data.address.trim(),
+        address: data.address?.trim() || null,
         city: data.city.trim(),
         branch: data.branch?.trim() || null,
         status: data.status,
@@ -171,10 +161,7 @@ const AddEditShipperPage = () => {
         console.error('Database error:', dbError);
         
         if (dbError.message.includes('duplicate key')) {
-          throw new Error('البريد الإلكتروني أو رقم التليفون ده موجود قبل كده في النظام. اختار رقم أو بريد تاني.');
-        }
-        if (dbError.message.includes('violates not-null constraint')) {
-          throw new Error('فيه حقول مطلوبة ناقصة. راجع البيانات المدخلة.');
+          throw new Error('البريد الإلكتروني أو رقم التليفون ده موجود قبل كده في النظام');
         }
         throw dbError;
       }
@@ -241,7 +228,7 @@ const AddEditShipperPage = () => {
               onClick={() => navigate('/app/shippers')}
               className="gap-2 text-gray-700 hover:bg-primary/5 hover:text-primary"
             >
-              <XCircle className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" />
               إلغاء
             </Button>
             <div className="w-px h-8 bg-border"></div>
@@ -249,7 +236,7 @@ const AddEditShipperPage = () => {
               <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3 text-gray-900">
                 {isEditMode ? (
                   <>
-                    <Edit3 className="h-8 w-8 text-primary" />
+                    <Edit className="h-8 w-8 text-primary" />
                     تعديل بيانات التاجر
                   </>
                 ) : (
@@ -266,15 +253,6 @@ const AddEditShipperPage = () => {
               </p>
             </div>
           </div>
-          
-          {shipperData && (
-            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-              <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <span className="text-sm text-blue-700">
-                تم التسجيل منذ {format(new Date(shipperData.created_at), 'dd/MM/yyyy', { locale: ar })}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* ملاحظات هامة */}
@@ -286,7 +264,7 @@ const AddEditShipperPage = () => {
           <AlertDescription className="mt-2 space-y-1.5 text-blue-700 text-sm">
             <p className="flex items-start gap-2">
               <span className="font-bold mt-0.5">•</span>
-              <span>تأكد من صحة رقم التليفون (يبدأ بـ 010، 011، 012، أو 015 ويتكون من 11 رقم)</span>
+              <span>تأكد من صحة رقم التليفون والبريد الإلكتروني</span>
             </p>
             <p className="flex items-start gap-2">
               <span className="font-bold mt-0.5">•</span>
@@ -303,35 +281,11 @@ const AddEditShipperPage = () => {
           </AlertDescription>
         </Alert>
 
-        {/* معاينة الأفاتار */}
-        {form.watch('email') && (
-          <Card className="mb-6 border-blue-200 bg-blue-50/30">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20 border-2 border-primary">
-                  <AvatarImage 
-                    src={`https://www.gravatar.com/avatar/${form.watch('email').trim().toLowerCase()}?s=200&d=identicon`}
-                    alt={form.watch('name') || 'صورة التاجر'}
-                  />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-white text-2xl font-bold">
-                    {form.watch('name').charAt(0).toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-bold text-lg">{form.watch('name') || 'اسم التاجر'}</p>
-                  <p className="text-muted-foreground">{form.watch('email')}</p>
-                  <p className="text-sm text-blue-700 mt-1">دي هتبقى صورة التاجر في النظام</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* نموذج الإضافة/التعديل */}
         <Card className="shadow-xl border-primary/20 overflow-hidden">
           <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-blue-50/70">
             <CardTitle className="text-xl md:text-2xl font-bold text-primary flex items-center gap-2.5">
-              {isEditMode ? <Edit3 className="h-6 w-6" /> : <Store className="h-6 w-6" />}
+              {isEditMode ? <Edit className="h-6 w-6" /> : <Store className="h-6 w-6" />}
               {isEditMode ? 'تعديل معلومات التاجر' : 'معلومات التاجر الأساسية'}
             </CardTitle>
             <CardDescription className="text-sm text-gray-600 mt-1">
@@ -356,7 +310,7 @@ const AddEditShipperPage = () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder={isEditMode ? shipperData?.name : "مثال: متجر الأزياء"}
+                            placeholder={isEditMode ? "اسم التاجر" : "مثال: متجر الأزياء"}
                             {...field}
                             dir="rtl"
                             disabled={submitting || loadingShipper}
@@ -368,7 +322,7 @@ const AddEditShipperPage = () => {
                           />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-600 mt-1">
-                          الاسم الكامل للتاجر زي ما هيظهر في النظام والتقارير
+                          الاسم الكامل للتاجر زي ما هيظهر في النظام
                         </FormDescription>
                         <FormMessage className="text-xs font-medium text-destructive" />
                       </FormItem>
@@ -382,11 +336,11 @@ const AddEditShipperPage = () => {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 text-gray-800 font-medium">
                           <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                          رقم التليفون <span className="text-destructive">*</span>
+                          رقم التليفون
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder={isEditMode ? shipperData?.phone : "01012345678"}
+                            placeholder={isEditMode ? "01012345678" : "01012345678"}
                             {...field}
                             dir="ltr"
                             disabled={submitting || loadingShipper}
@@ -420,7 +374,7 @@ const AddEditShipperPage = () => {
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder={isEditMode ? shipperData?.email || "example@email.com" : "example@email.com"}
+                            placeholder={isEditMode ? "example@email.com" : "example@email.com"}
                             {...field}
                             dir="ltr"
                             disabled={submitting || loadingShipper}
@@ -428,7 +382,7 @@ const AddEditShipperPage = () => {
                           />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-600 mt-1">
-                          البريد الإلكتروني للتواصل مع التاجر (اختياري لكن موصى بيه)
+                          البريد الإلكتروني للتواصل مع التاجر
                         </FormDescription>
                         <FormMessage className="text-xs font-medium text-destructive" />
                       </FormItem>
@@ -446,7 +400,7 @@ const AddEditShipperPage = () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder={isEditMode ? shipperData?.city : "القاهرة"}
+                            placeholder={isEditMode ? "القاهرة" : "القاهرة"}
                             {...field}
                             dir="rtl"
                             disabled={submitting || loadingShipper}
@@ -471,11 +425,11 @@ const AddEditShipperPage = () => {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 text-gray-800 font-medium">
                           <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                          العنوان الكامل <span className="text-destructive">*</span>
+                          العنوان
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder={isEditMode ? shipperData?.address : "شارع التحرير، الدور 3"}
+                            placeholder={isEditMode ? "شارع التحرير" : "شارع التحرير"}
                             {...field}
                             dir="rtl"
                             disabled={submitting || loadingShipper}
@@ -483,7 +437,7 @@ const AddEditShipperPage = () => {
                           />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-600 mt-1">
-                          العنوان التفصيلي للتاجر (شارع، عمارة، دور، إلخ)
+                          العنوان الكامل للتاجر
                         </FormDescription>
                         <FormMessage className="text-xs font-medium text-destructive" />
                       </FormItem>
@@ -501,7 +455,7 @@ const AddEditShipperPage = () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder={isEditMode ? shipperData?.branch || "فرع المعادي" : "فرع المعادي"}
+                            placeholder={isEditMode ? "فرع المعادي" : "فرع المعادي"}
                             {...field}
                             dir="rtl"
                             disabled={submitting || loadingShipper}
@@ -580,7 +534,7 @@ const AddEditShipperPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-border mt-2">
                   <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50/70 px-4 py-3 rounded-lg border border-amber-200">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <span>كل الحقول المميزة بـ <span className="text-destructive">*</span> إجبارية</span>
+                    <span>الحقول المميزة بـ <span className="text-destructive">*</span> إجبارية</span>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <Button 

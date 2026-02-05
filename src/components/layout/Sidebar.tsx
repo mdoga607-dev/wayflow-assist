@@ -100,7 +100,7 @@ const menuItems: MenuItem[] = [
       { icon: Shield, label: "كافة التجار", path: "/app/shippers", roles: ["head_manager", "manager"] },
       { icon: Plus, label: "إضافة تاجر جديد", path: "/app/shippers/add", roles: ["head_manager", "manager"] },
       { icon: Users, label: "إدارة المستخدمين", path: "/app/admin-users", roles: ["head_manager"] },
-      { icon: BarChart3, label: "مؤشرات أداء المناديب", path: "/app/delegates/kpis", roles: ["head_manager", "manager"] },
+      { icon: BarChart3, label: "مؤشرات أداء المناديب", path: "/app/delegates/stats", roles: ["head_manager", "manager"] },
       { icon: BarChart3, label: "إحصائيات المناديب", path: "/app/delegates/shipments", roles: ["head_manager", "manager"] },
     ]
   },

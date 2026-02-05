@@ -35,7 +35,6 @@ import ResetPassword from "./pages/ResetPassword";
 import PrintLabel from "@/components/ship/PrintLabel";
 import SheetsPage from "./pages/SheetsPage";
 import GuestLanding from "./pages/GuestLanding";
-import ShipperPage from "./pages/ShipperPage";
 import CourierDashboard from "./pages/CourierDashboard";
 import DelegateStats from "./pages/delegates/DelegateStats"; // ✅ إضافة صفحة الإحصائيات
 import DelegateShipments from "./pages/delegates/DelegateShipments"; // ✅ إضافة صفحة شحنات المناديب
@@ -89,6 +88,8 @@ import StartInventoryPage from "./pages/inventory/StartInventoryPage";
 import AddGovernoratePage from "./pages/areas/AddGovernoratePage";
 import AddAreaPage from "./pages/areas/AddAreaPage";
 import AddComplaintPage from "./pages/complaints/AddComplaintPage";
+import ShipperDetails from "./pages/ShipperDetails";
+import AddEditShipperPage from "./pages/shippers/AddEditShipperPage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -148,17 +149,21 @@ const App = () => (
                 <Route path="sheets" element={<SheetsPage />} />
                 <Route path="sheets/create-pickup" element={<CreatePickupSheetPage />} />
                 <Route path="sheets/pickup" element={<PickupSheetsPage />} />
-                
-                {/* ========== المناديب (مع جميع الصفحات الفرعية) ========== */}
-                <Route path="delegates" element={<DelegatesManagement />} />
-                <Route path="delegates/add" element={<AddDelegatePage />} />
-                <Route path="delegates/:id" element={<DelegateDetails />} />
-                <Route path="delegates/stats" element={<DelegateStats />} /> {/* ✅ مسار الإحصائيات الصحيح */}
-                <Route path="delegates/shipments" element={<DelegateShipments />} /> {/* ✅ مسار شحنات المناديب */}
+               {/* ========== المناديب ========== */}
+    <Route path="delegates" element={<DelegatesManagement />} />
+    <Route path="delegates/add" element={<AddDelegatePage />} />
+    <Route path="delegate/:id" element={<DelegateDetails />} /> {/* ✅ مفرد بدون s */}
+  <Route path="delegate/:id/edit" element={<AddDelegatePage />} />
+    {/* <Route path="delegates/stats" element={<DelegateStats />} /> */}
+    <Route path="delegates/shipments" element={<DelegateShipments />} />// الشحنات{/* ✅ مسار شحنات المناديب */}
                 
                 {/* ========== التجار ========== */}
                 <Route path="shippers" element={<ShippersManagement />} />
                 <Route path="shippers/add" element={<AddShipperPage />} />
+                <Route path="shippers/add" element={<AddEditShipperPage />} />
+                <Route path="shippers/:id/edit" element={<AddEditShipperPage />} />
+                <Route path="shippers/:id" element={<ShipperDetails />} />
+                
                 
                 {/* ========== المتاجر ========== */}
                 <Route path="stores" element={<StoresPage />} />
@@ -225,14 +230,7 @@ const App = () => (
               </Route>
 
               {/* ========== لوحة التاجر (مسار منفصل) ========== */}
-              <Route 
-                path="/shipper-dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['shipper']}>
-                    <ShipperPage />
-                  </ProtectedRoute>
-                } 
-              />
+             
 
               {/* ========== لوحة المندوب (مسار منفصل) ========== */}
               <Route 

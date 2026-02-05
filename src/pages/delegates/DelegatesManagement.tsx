@@ -38,7 +38,6 @@ interface Delegate {
   avatar_url: string | null;
   branch: string | null;
   created_at: string;
-  // تمت إزالة courier_limit و store_id لأنها غير موجودة في الجدول
 }
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline"; color: string }> = {
@@ -73,20 +72,19 @@ const DelegatesManagement = () => {
     if (!role || !['head_manager', 'manager'].includes(role as string)) {
       toast({
         title: "غير مصرح",
-        description: "ليس لديك الصلاحية لإدارة المناديب",
+        description: "ماعندكش الصلاحية لإدارة المناديب",
         variant: "destructive"
       });
       navigate('/unauthorized', { replace: true });
     }
   }, [authLoading, role, navigate]);
 
-  // جلب المناديب (بدون الأعمدة غير الموجودة)
+  // جلب المناديب
   const fetchDelegates = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // ✅ تم إصلاح الاستعلام: إزالة الأعمدة غير الموجودة (courier_limit, store_id, updated_at)
       const { data, error } = await supabase
         .from('delegates')
         .select(`
@@ -128,22 +126,12 @@ const DelegatesManagement = () => {
     } catch (err: any) {
       console.error('Error fetching delegates:', err);
       const errorMessage = err.message || 'فشل تحميل بيانات المناديب. يرجى المحاولة مرة تانية.';
-      // ✅ معالجة خطأ العمود غير الموجود بشكل مخصص
-      if (errorMessage.includes('courier_limit') || errorMessage.includes('does not exist')) {
-        setError('يوجد مشكلة في هيكل قاعدة البيانات. يرجى التواصل مع المطور.');
-        toast({
-          title: "خطأ في قاعدة البيانات",
-          description: "الجدول غير مكتمل. يرجى إبلاغ المسؤول الفني.",
-          variant: "destructive"
-        });
-      } else {
-        setError(errorMessage);
-        toast({
-          title: "فشل التحميل",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      }
+      setError(errorMessage);
+      toast({
+        title: "فشل التحميل",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -158,7 +146,7 @@ const DelegatesManagement = () => {
   // الحصول على المحافظات الفريدة
   const cities = [...new Set(delegates.map(d => d.city).filter(Boolean))];
   
-  // الحصول على الفروع الفريدة (بعد تنظيف البيانات)
+  // الحصول على الفروع الفريدة
   const branches = [...new Set(
     delegates
       .map(d => d.branch?.trim() || 'بدون فرع')
@@ -288,12 +276,11 @@ const DelegatesManagement = () => {
   // حالة التحميل
   if (authLoading || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">
-            جاري تحميل بيانات المناديب...
-          </p>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50/20">
+        <div className="text-center p-8 bg-card rounded-xl shadow-lg border border-border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">جاري تحميل بيانات المناديب...</p>
+          <p className="text-sm text-muted-foreground mt-1">برجاء الانتظار</p>
         </div>
       </div>
     );
@@ -303,52 +290,31 @@ const DelegatesManagement = () => {
   if (error) {
     return (
       <div className="container py-8 max-w-4xl mx-auto">
-        <Card className="border-destructive">
+        <Card className="border-destructive/30 bg-destructive/5">
           <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" /> خطأ في قاعدة البيانات
+            <CardTitle className="text-destructive flex items-center gap-2 justify-center">
+              <AlertCircle className="h-6 w-6" />
+              خطأ في التحميل
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center py-8">
-            <div className="bg-destructive/10 p-4 rounded-lg mb-6 inline-block">
-              <p className="font-mono text-sm text-destructive break-all max-w-md mx-auto">
-                {error.includes('courier_limit') 
-                  ? 'العمود "courier_limit" غير موجود في جدول "delegates"' 
-                  : error}
-              </p>
-            </div>
-            <p className="text-muted-foreground mb-6 text-lg">
-              {error.includes('courier_limit')
-                ? 'يجب إضافة العمود إلى الجدول أو تعديل الكود لإزالة الإشارة إليه'
-                : 'حدث خطأ أثناء تحميل البيانات'}
-            </p>
+            <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{error}</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button 
                 onClick={() => window.location.reload()} 
                 variant="destructive"
-                className="gap-2"
+                className="gap-2 px-6 py-3"
               >
                 <RefreshCcw className="h-4 w-4" />
                 إعادة المحاولة
               </Button>
               <Button 
-                onClick={() => navigate('/app/delegates')} 
+                onClick={() => navigate('/app')} 
                 variant="outline"
-                className="gap-2"
+                className="gap-2 px-6 py-3"
               >
                 <Truck className="h-4 w-4" />
-                العودة لقائمة المناديب
-              </Button>
-              <Button 
-                onClick={() => {
-                  // إرسال تقرير خطأ للمطور
-                  window.location.href = 'mailto:support@company.com?subject=Database Error&body=Error: column delegates.courier_limit does not exist';
-                }}
-                variant="secondary"
-                className="gap-2"
-              >
-                <AlertCircle className="h-4 w-4" />
-                إبلاغ المطور
+                العودة للرئيسية
               </Button>
             </div>
           </CardContent>
@@ -408,9 +374,9 @@ const DelegatesManagement = () => {
       </div>
 
       {/* ملاحظات هامة */}
-      <Card>
+      <Card className="bg-blue-50/50 border-blue-200">
         <CardContent className="pt-4">
-          <div className="flex items-start gap-3 bg-blue-50 p-3 rounded-lg">
+          <div className="flex items-start gap-3">
             <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-blue-800">
               <p className="font-medium">ملاحظات هامة:</p>
@@ -518,7 +484,7 @@ const DelegatesManagement = () => {
               <SelectContent>
                 <SelectItem value="all">كل المحافظات</SelectItem>
                 {cities.map((city) => (
-                  <SelectItem key={city} value={city}>
+                  <SelectItem key={`city-${city}`} value={city}>
                     {city}
                   </SelectItem>
                 ))}
@@ -547,12 +513,12 @@ const DelegatesManagement = () => {
               <SelectContent>
                 <SelectItem value="all">كل الفروع</SelectItem>
                 {branches.map((branch) => (
-                  <SelectItem key={branch} value={branch}>
+                  <SelectItem key={`branch-${branch}`} value={branch}>
                     {branch}
                   </SelectItem>
                 ))}
-                {delegates.some(d => !d.branch || d.branch.trim() === 'بدون فرع') && (
-                  <SelectItem key="بدون فرع" value="بدون فرع">
+                {delegates.some(d => !d.branch || d.branch?.trim() === 'بدون فرع') && (
+                  <SelectItem key="بدون-فرع" value="بدون فرع">
                     بدون فرع
                   </SelectItem>
                 )}
@@ -604,7 +570,7 @@ const DelegatesManagement = () => {
         </CardContent>
       </Card>
 
-      {/* جدول المناديب */}
+      {/* جدول المناديب - الجزء المصحح بالكامل */}
       <Card className="rounded-xl shadow-sm border-border overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -648,62 +614,101 @@ const DelegatesManagement = () => {
                     const total = delegate.total_delivered + delegate.total_delayed + delegate.total_returned;
                     const deliveryRate = total > 0 ? (delegate.total_delivered / total) * 100 : 0;
                     
+                    // ✅ دوال آمنة للتنقل مع التحقق من صحة الـ ID
+                    const handleRowClick = () => {
+                      if (delegate.id && delegate.id !== 'undefined' && delegate.id !== 'null') {
+                        navigate(`/app/delegate/${delegate.id}`);
+                      } else {
+                        toast({
+                          title: "خطأ في البيانات",
+                          description: "المندوب ده مش ليه رقم تعريفي صحيح. راجع البيانات في قاعدة البيانات.",
+                          variant: "destructive"
+                        });
+                      }
+                    };
+                    
+                    const handleViewDetails = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      if (delegate.id && delegate.id !== 'undefined' && delegate.id !== 'null') {
+                        navigate(`/app/delegate/${delegate.id}`);
+                      }
+                    };
+                    
+                    const handleEdit = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      if (delegate.id && delegate.id !== 'undefined' && delegate.id !== 'null') {
+                        navigate(`/app/delegate/${delegate.id}/edit`);
+                      }
+                    };
+                    
+                    const handleDelete = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      if (delegate.id && delegate.id !== 'undefined' && delegate.id !== 'null') {
+                        setDelegateToDelete(delegate.id);
+                        setIsDeleteDialogOpen(true);
+                      }
+                    };
+                    
                     return (
                       <TableRow 
-                        key={delegate.id} 
+                        key={delegate.id || `delegate-${Math.random()}`} 
                         className="hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/app/delegate/${delegate.id}`)}
+                        onClick={handleRowClick}
                       >
                         <TableCell>
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={delegate.avatar_url || undefined} />
+                            <AvatarImage 
+                              src={delegate.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(delegate.name)}`} 
+                            />
                             <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold">
-                              {delegate.name.charAt(0).toUpperCase()}
+                              {delegate.name.charAt(0).toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
                         </TableCell>
                         <TableCell className="font-medium">
                           <div className="space-y-0.5">
-                            <p className="font-semibold text-gray-900">{delegate.name}</p>
+                            <p className="font-semibold text-gray-900">{delegate.name || 'بدون اسم'}</p>
                             <p className="text-xs text-muted-foreground">
                               <MapPin className="h-3 w-3 inline-block mr-1" />
-                              {delegate.branch}
+                              {delegate.branch || 'بدون فرع'}
                             </p>
                           </div>
                         </TableCell>
                         <TableCell dir="ltr" className="font-mono text-sm">
                           <div className="flex items-center gap-1">
                             <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                            {delegate.phone}
+                            {delegate.phone || 'مش متاح'}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm">
                           <Badge variant="outline" className="px-2 py-0.5 bg-blue-50">
                             <MapPin className="h-3 w-3 inline-block mr-0.5" />
-                            {delegate.city}
+                            {delegate.city || 'مش محدد'}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <p className="font-bold text-green-600 text-center">
-                              {delegate.total_delivered}
+                              {delegate.total_delivered || 0}
                             </p>
                             <Progress 
-                              value={deliveryRate}
-                              className="h-2 rounded-full bg-green-100"
+                              value={Math.round(deliveryRate)}
+                              className="h-2.5 rounded-full bg-green-100"
+                              style={{ '--progress-bg': 'bg-green-600' } as React.CSSProperties}
+                             
                             />
                           </div>
                         </TableCell>
                         <TableCell className="font-bold text-red-600 text-center">
-                          {delegate.total_delayed}
+                          {delegate.total_delayed || 0}
                         </TableCell>
                         <TableCell className="font-bold text-amber-600 text-center">
-                          {delegate.total_returned}
+                          {delegate.total_returned || 0}
                         </TableCell>
                         <TableCell>
                           <div className="text-center">
                             <p className="font-bold text-primary">
-                              {Number(delegate.balance).toLocaleString()}
+                              {Number(delegate.balance || 0).toLocaleString()}
                             </p>
                             <p className="text-xs text-muted-foreground">ج.م</p>
                           </div>
@@ -713,7 +718,7 @@ const DelegatesManagement = () => {
                             variant={statusConfig[delegate.status]?.variant || "secondary"}
                             className={cn(
                               "px-3 py-1 text-xs font-medium rounded-full",
-                              statusConfig[delegate.status]?.color
+                              statusConfig[delegate.status]?.color || "bg-gray-100 text-gray-800"
                             )}
                           >
                             {statusConfig[delegate.status]?.label || 'مش معروف'}
@@ -724,34 +729,27 @@ const DelegatesManagement = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/app/delegate/${delegate.id}/edit`);
-                              }}
+                              onClick={handleEdit}
                               className="h-8 w-8 p-0 hover:bg-blue-100"
+                              disabled={!delegate.id || delegate.id === 'undefined'}
                             >
                               <Edit className="h-3.5 w-3.5 text-blue-600" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/app/delegate/${delegate.id}`);
-                              }}
+                              onClick={handleViewDetails}
                               className="h-8 w-8 p-0 hover:bg-green-100"
+                              disabled={!delegate.id || delegate.id === 'undefined'}
                             >
                               <Eye className="h-3.5 w-3.5 text-green-600" />
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDelegateToDelete(delegate.id);
-                                setIsDeleteDialogOpen(true);
-                              }}
+                              onClick={handleDelete}
                               className="h-8 w-8 p-0 hover:bg-red-100"
+                              disabled={!delegate.id || delegate.id === 'undefined'}
                             >
                               <Trash2 className="h-3.5 w-3.5 text-red-600" />
                             </Button>
@@ -764,17 +762,17 @@ const DelegatesManagement = () => {
               </Table>
             </div>
           ) : (
-            <div className="p-12 text-center text-muted-foreground">
+            <div className="p-12 text-center text-muted-foreground bg-muted/30">
               <div className="flex justify-center mb-4">
-                <div className="bg-muted/30 p-4 rounded-full">
+                <div className="bg-muted p-4 rounded-full">
                   <Truck className="h-12 w-12 text-muted-foreground" />
                 </div>
               </div>
-              <p className="text-lg font-medium mb-2">مفيش مناديب تطابق معايير البحث</p>
-              <p className="text-sm mb-6 max-w-md mx-auto">
+              <p className="text-xl font-medium mb-2">مفيش مناديب يطابقوا معايير البحث</p>
+              <p className="text-muted-foreground max-w-md mx-auto mb-6">
                 {searchTerm || cityFilter !== 'all' || statusFilter !== 'all' || branchFilter !== 'all'
-                  ? 'يرجى تعديل الفلاتر أو البحث بمعايير مختلفة'
-                  : 'مفيش مناديب مسجلين في النظام حالياً'}
+                  ? 'جرب غير معايير البحث أو امسح الفلاتر عشان تشوف كل المناديب'
+                  : 'مفيش مناديب مسجلين في النظام دلوقتي'}
               </p>
               <div className="flex justify-center gap-4">
                 <Button 
@@ -788,14 +786,14 @@ const DelegatesManagement = () => {
                   className="gap-2"
                 >
                   <RefreshCcw className="h-4 w-4" />
-                  إعادة تعيين الفلاتر
+                  مسح الفلاتر
                 </Button>
                 <Button 
                   onClick={() => navigate('/app/delegates/add')}
                   className="gap-2 bg-primary hover:bg-primary/90"
                 >
                   <Plus className="h-4 w-4" />
-                  إضافة مندوب جديد
+                  أضف مندوب جديد
                 </Button>
               </div>
             </div>
@@ -804,37 +802,43 @@ const DelegatesManagement = () => {
       </Card>
 
       {/* نصائح لإدارة المناديب */}
-      <Card>
+      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50/30 border-blue-200">
         <CardHeader>
           <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-            <Info className="h-5 w-5 text-gray-700" />
+            <Info className="h-5 w-5 text-blue-700" />
             نصائح لإدارة المناديب بفعالية
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex-shrink-0">1</div>
+        <CardContent className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-blue-100">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-800 text-sm font-bold flex-shrink-0">
+              1
+            </div>
             <div>
               <p className="font-medium text-gray-800">مراقبة الأداء</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 راقب معدل التسليم لكل مندوب وقم بتحفيز المناديب ذوي الأداء العالي
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex-shrink-0">2</div>
+          <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-amber-100">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-100 text-amber-800 text-sm font-bold flex-shrink-0">
+              2
+            </div>
             <div>
               <p className="font-medium text-gray-800">التوزيع العادل</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 وزع الشحنات بشكل عادل بين المناديب بناءً على قدراتهم ومناطقهم
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex-shrink-0">3</div>
+          <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-green-100">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-green-100 text-green-800 text-sm font-bold flex-shrink-0">
+              3
+            </div>
             <div>
               <p className="font-medium text-gray-800">التحفيز والمكافآت</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-700 mt-1">
                 قم بمكافأة المناديب المتميزين لزيادة حماسهم وتحسين الأداء العام
               </p>
             </div>
