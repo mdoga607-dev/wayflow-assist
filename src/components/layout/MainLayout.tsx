@@ -1,29 +1,45 @@
 import { Outlet } from "react-router-dom";
+import { useState } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import { cn } from "@/lib/utils";
 
 const MainLayout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
+
   return (
-    // أضفنا dir="rtl" لضمان تنسيق العناصر من اليمين لليسار
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* الهيدر ثابت في الأعلى بارتفاع 16 (4rem) */}
-      <Header onToggleSidebar={() => {}} />
+      {/* الهيدر ثابت في الأعلى */}
+      <Header onToggleSidebar={toggleSidebar} />
       
       <div className="flex">
-        {/* السايدبار ثابت على اليمين بعرض w-72 */}
-        <Sidebar />
+        {/* السايدبار */}
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         
-        {/* المحتوى الرئيسي:
-            1. pt-16 لتعويض ارتفاع الهيدر
-            2. mr-72 لتعويض عرض السايدبار (يجب أن يطابق و-72 في ملف السايدبار)
-            3. flex-1 ليأخذ باقي مساحة الشاشة
-        */}
-        <main className="flex-1 pt-16 min-h-screen transition-all duration-300 mr-72">
+        {/* المحتوى الرئيسي */}
+        <main 
+          className={cn(
+            "flex-1 pt-16 min-h-screen transition-all duration-300",
+            isSidebarOpen ? "mr-72" : "mr-0"
+          )}
+        >
           <div className="p-6 animate-fade-in">
             <Outlet />
           </div>
         </main>
       </div>
+      
+      {/* Overlay عند فتح القائمة على الموبايل */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 };

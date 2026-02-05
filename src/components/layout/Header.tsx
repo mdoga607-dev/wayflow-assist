@@ -188,7 +188,13 @@ const Header = ({ onToggleSidebar }: HeaderProps) => {
             <Bell className="h-5 w-5" />
             <span className="absolute top-2 left-2 w-2 h-2 bg-red-500 rounded-full border border-[#1a7061]" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 hidden md:flex">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white hover:bg-white/10 hidden md:flex"
+            onClick={() => window.open('tel:01012345678', '_self')}
+            title="اتصل بالدعم الفني"
+          >
             <Smartphone className="h-5 w-5 text-green-400" />
           </Button>
         </div>
