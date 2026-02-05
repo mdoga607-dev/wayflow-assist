@@ -5,13 +5,13 @@ import {
   Bell, MapPin, Home, Wallet, LayoutDashboard, Settings,
   ChevronDown, ChevronUp, Plus, ScanLine, RefreshCcw, BarChart3, Receipt, Shield,
   UserCheck, Printer, UserCircle, Archive, Building2, Layers, AlertCircle,
-  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info, FileSpreadsheet,Search
+  ListChecks, Database, MessageCircle, Bot, AlertTriangle, Info, FileSpreadsheet, Search, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useMemo } from "react";
-// ✅ تم إزالة استيراد Button غير الضروري هنا
+import { Button } from "@/components/ui/button";
 
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -22,7 +22,11 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-// src/components/layout/Sidebar.tsx - الجزء المهم فقط (قائمة menuItems المصححة)
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
 const menuItems: MenuItem[] = [
   {
     icon: LayoutDashboard,
@@ -176,7 +180,8 @@ const menuItems: MenuItem[] = [
     ]
   },
 ];
-const Sidebar = () => {
+
+const Sidebar = ({ isOpen = true, onClose }: SidebarProps) => {
   const location = useLocation();
   const { role, loading } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -213,10 +218,34 @@ const Sidebar = () => {
 
   return (
     <aside 
-      className="fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gradient-to-b from-[#19026d] to-[#040127] z-40 shadow-2xl w-72 border-l border-[#b43f52]" 
+      className={cn(
+        "fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gradient-to-b from-[#19026d] to-[#040127] z-40 shadow-2xl border-l border-[#b43f52] transition-all duration-300",
+        isOpen ? "w-72 translate-x-0" : "w-72 translate-x-full lg:w-0 lg:translate-x-0"
+      )}
       dir="rtl"
     >
-      <ScrollArea className="h-full">
+      {/* Logo and Close Button */}
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-inner">
+            <span className="text-[#19026d] font-bold text-xl">ع</span>
+          </div>
+          <div>
+            <h2 className="text-white font-bold text-sm">العلماية للشحن</h2>
+            <p className="text-white/60 text-xs">نظام الإدارة المتكامل</p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/10 lg:hidden"
+          onClick={onClose}
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <ScrollArea className="h-[calc(100%-5rem)]">
         <nav className="p-4 space-y-1">
           {menuItems.map((item) => {
             if (!hasAccess(item.roles)) return null;
@@ -274,7 +303,6 @@ const Sidebar = () => {
                   </NavLink>
                 ) : null}
 
-                {/* ✅ الحل الصحيح: استخدام NavLink مباشرة بدون Button/asChild */}
                 {hasChildren && isOpen && (
                   <div className="mt-1 space-y-1 pr-2 animate-in slide-in-from-top-2 duration-200">
                     {item.children?.map((child) => {
@@ -282,7 +310,6 @@ const Sidebar = () => {
                       const isChildActive = isActivePath(child.path);
                       
                       return (
-                        // ✅ تم التصحيح: استخدام NavLink مباشرة بدون Button/asChild
                         <NavLink
                           key={child.path}
                           to={child.path}
