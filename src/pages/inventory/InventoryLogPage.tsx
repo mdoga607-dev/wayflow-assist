@@ -96,9 +96,15 @@ const InventoryLogPage = () => {
 
       if (inventoryError) throw inventoryError;
       
-        setInventoryInfo({
+      // Safely extract branch name from the response
+      const branchData = inventoryData.branch as { name: string } | { name: string }[] | null;
+      const branchName = Array.isArray(branchData) 
+        ? (branchData[0]?.name || 'غير معروف')
+        : (branchData?.name || 'غير معروف');
+      
+      setInventoryInfo({
         name: inventoryData.name,
-        branch: inventoryData.branch?.name || 'غير معروف',
+        branch: branchName,
         date: inventoryData.inventory_date
       });
       

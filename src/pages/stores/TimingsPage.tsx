@@ -91,7 +91,7 @@ const BranchTimingsPage = () => {
         if (error) throw error;
         setBranches(data || []);
         // جلب قائمة المحافظات الفريدة
-        const uniqueGovernorates = Array.from(new Set((data || []).map((b: Branch) => b.governorate)));
+        const uniqueGovernorates = Array.from(new Set((data || []).map((b: Branch) => b.governorate))) as string[];
         setGovernorates(uniqueGovernorates);
       } catch (error) {
         console.error('Error fetching branches:', error);
