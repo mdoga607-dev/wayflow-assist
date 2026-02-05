@@ -1,10 +1,13 @@
 -- 1. إنشاء جدول شيتات المناديب
 CREATE TABLE IF NOT EXISTS public.sheets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sheet_name TEXT NOT NULL,
-    sheet_type TEXT NOT NULL, -- courier, pickup, etc.
-    created_by UUID REFERENCES auth.users(id),
-    status TEXT DEFAULT 'active',
+    courier_id UUID REFERENCES auth.users(id),
+    sheet_date DATE NOT NULL,
+    total_shipments INTEGER DEFAULT 0,
+    completed_shipments INTEGER DEFAULT 0,
+    pending_shipments INTEGER DEFAULT 0,
+    notes TEXT,
+    created_by UUID,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

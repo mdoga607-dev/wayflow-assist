@@ -10,7 +10,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
 import AIBot from "./components/AIBot";
 
-// Pages
+// الصفحات الرئيسية
 import Dashboard from "./pages/Dashboard";
 import Shipments from "./pages/Shipments";
 import AddShipment from "./pages/AddShipment";
@@ -20,16 +20,16 @@ import DelayedShipments from "./pages/DelayedShipments";
 import Returns from "./pages/Returns";
 import PaymentDocuments from "./pages/PaymentDocuments";
 import ShippersManagement from "./pages/ShippersManagement";
-import DelegatesManagement from "./pages/DelegatesManagement";
+import DelegatesManagement from "./pages/delegates/DelegatesManagement"; // ✅ التصحيح: بدون مسار فرعي
 import TrackShipment from "./pages/TrackShipment";
 import Auth from "./pages/Auth";
 import AddBalance from "./pages/balance/AddBalance";
 import GuestOrders from "./pages/GuestOrders";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
-import AdminUserManagement from "./pages/AdminUserManagement";
+import AdminUserManagement from "./pages/Alladmins/AdminUserManagement";
 import TrackDelegates from "./pages/TrackDelegates";
-import DelegateDetails from "./pages/DelegateDetails";
+import DelegateDetails from "./pages/delegates/DelegateDetails"; // ✅ التصحيح: بدون مسار فرعي
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import PrintLabel from "@/components/ship/PrintLabel";
@@ -37,6 +37,8 @@ import SheetsPage from "./pages/SheetsPage";
 import GuestLanding from "./pages/GuestLanding";
 import ShipperPage from "./pages/ShipperPage";
 import CourierDashboard from "./pages/CourierDashboard";
+import DelegateStats from "./pages/delegates/DelegateStats"; // ✅ إضافة صفحة الإحصائيات
+import DelegateShipments from "./pages/delegates/DelegateShipments"; // ✅ إضافة صفحة شحنات المناديب
 
 // الصفحات الجديدة
 import PickupRequestsPage from "./pages/PickupRequestsPage";
@@ -66,10 +68,10 @@ import CollectionReportPage from "./pages/balance/CollectionReportPage";
 import ProfilePage from "./pages/ProfilePage";
 import AddStorePage from "./pages/stores/AddStorePage";
 import AddShipperPage from "./pages/shippers/AddShipperPage";
-import AddDelegatePage from "./pages/delegates/AddDelegatePage";
+import AddDelegatePage from "./pages/delegates/AddDelegatePage"; // ✅ التصحيح: المسار الصحيح
 import EditProfilePage from "./pages/profile/EditProfilePage";
 import ExcelUploadPage from "./pages/ExcelUploadPage";
-import CourierShipmentsPage from "./pages/CourierShipmentsPage"; // ✅ التصحيح: استخدام المكون الصحيح
+import CourierShipmentsPage from "./pages/CourierShipmentsPage";
 import AddPickupRequestPage from "./pages/AddPickupRequestPage";
 import ShipmentsManagementPage from "./pages/ShipmentsManagementPage";
 import CreatePickupSheetPage from "./pages/CreatePickupSheetPage";
@@ -78,6 +80,15 @@ import ChangePasswordPage from "./pages/profile/ChangePasswordPage";
 import DeleteAccountPage from "./pages/profile/DeleteAccountPage";
 import PickupSheetsPage from "./pages/PickupSheetsPage";
 import ReportsPage from "./pages/ReportsPage";
+import AddBotPage from "./pages/whatsapp/AddBotPage";
+import AddTemplatePage from "./pages/whatsapp/AddTemplatePage";
+import InventoryDetailsPage from "./pages/inventory/InventoryDetailsPage";
+import InventoryLogPage from "./pages/inventory/InventoryLogPage"; // ✅ التصحيح: بدون تكرار Page
+import AddInventoryPage from "./pages/inventory/AddInventoryPage";
+import StartInventoryPage from "./pages/inventory/StartInventoryPage";
+import AddGovernoratePage from "./pages/areas/AddGovernoratePage";
+import AddAreaPage from "./pages/areas/AddAreaPage";
+import AddComplaintPage from "./pages/complaints/AddComplaintPage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -119,7 +130,7 @@ const App = () => (
                 <Route path="delayed-shipments" element={<DelayedShipments />} />
                 <Route path="returns" element={<Returns />} />
                 <Route path="print-shipments" element={<PrintShipmentsPage />} />
-                <Route path="courier-shipments" element={<CourierShipmentsPage />} /> {/* ✅ التصحيح: استخدام المكون الصحيح */}
+                <Route path="courier-shipments" element={<CourierShipmentsPage />} />
                 <Route path="pickup-requests" element={<PickupRequestsPage />} />
                 <Route path="pickup-requests/add" element={<AddPickupRequestPage />} />
                 <Route path="check-shipments" element={<CheckShipmentsPage />} />
@@ -136,12 +147,14 @@ const App = () => (
                 {/* ========== الشيتات ========== */}
                 <Route path="sheets" element={<SheetsPage />} />
                 <Route path="sheets/create-pickup" element={<CreatePickupSheetPage />} />
-                <Route path="sheets/pickup" element={<PickupSheetsPage />} /> {/* ✅ إضافة مسار شيتات البيك أب */}
+                <Route path="sheets/pickup" element={<PickupSheetsPage />} />
                 
-                {/* ========== المناديب ========== */}
+                {/* ========== المناديب (مع جميع الصفحات الفرعية) ========== */}
                 <Route path="delegates" element={<DelegatesManagement />} />
                 <Route path="delegates/add" element={<AddDelegatePage />} />
-                <Route path="delegate/:id" element={<DelegateDetails />} />
+                <Route path="delegates/:id" element={<DelegateDetails />} />
+                <Route path="delegates/stats" element={<DelegateStats />} /> {/* ✅ مسار الإحصائيات الصحيح */}
+                <Route path="delegates/shipments" element={<DelegateShipments />} /> {/* ✅ مسار شحنات المناديب */}
                 
                 {/* ========== التجار ========== */}
                 <Route path="shippers" element={<ShippersManagement />} />
@@ -155,18 +168,21 @@ const App = () => (
                 
                 {/* ========== الملف الشخصي (مع جميع المسارات الفرعية) ========== */}
                 <Route path="profile" element={<ProfilePage />} />
-                <Route path="profile/wallet" element={<WalletBalancePage />} /> {/* ✅ إضافة رصيد المحفظة */}
-                <Route path="profile/change-password" element={<ChangePasswordPage />} /> {/* ✅ إضافة تغيير كلمة المرور */}
-                <Route path="profile/delete-account" element={<DeleteAccountPage />} /> {/* ✅ إضافة حذف الحساب */}
+                <Route path="profile/wallet" element={<WalletBalancePage />} />
+                <Route path="profile/change-password" element={<ChangePasswordPage />} />
+                <Route path="profile/delete-account" element={<DeleteAccountPage />} />
                 <Route path="profile/edit" element={<EditProfilePage />} />
                 
                 {/* ========== الشكاوى ========== */}
                 <Route path="complaints" element={<ComplaintsPage />} />
                 <Route path="complaints/archive" element={<ComplaintsArchivePage />} />
+                <Route path="complaints/add" element={<AddComplaintPage />} />
                 
                 {/* ========== المناطق ========== */}
                 <Route path="areas" element={<AreasPage />} />
                 <Route path="areas/governorates" element={<GovernoratesPage />} />
+                <Route path="areas/add-governorate" element={<AddGovernoratePage />} />
+                <Route path="areas/add" element={<AddAreaPage />} />
                 
                 {/* ========== المهام ========== */}
                 <Route path="tasks" element={<TasksPage />} />
@@ -174,6 +190,10 @@ const App = () => (
                 
                 {/* ========== الجرد ========== */}
                 <Route path="inventory" element={<InventoryPage />} />
+                <Route path="inventory/log" element={<InventoryLogPage />} /> {/* ✅ التصحيح: بدون تكرار Page */}
+                <Route path="inventory/add" element={<AddInventoryPage />} />
+                <Route path="inventory/:id" element={<InventoryDetailsPage />} />
+                <Route path="inventory/start/:id" element={<StartInventoryPage />} />
                 
                 {/* ========== تتبع المناديب ========== */}
                 <Route path="track-delegates" element={<TrackDelegates />} />
@@ -190,6 +210,8 @@ const App = () => (
                 <Route path="whatsapp/add-campaign" element={<AddCampaignPage />} />
                 <Route path="whatsapp/bots" element={<BotsPage />} />
                 <Route path="whatsapp/templates" element={<TemplatesPage />} />
+                <Route path="whatsapp/add-template" element={<AddTemplatePage />} />
+                <Route path="whatsapp/add-bot" element={<AddBotPage />} />
                 
                 {/* ========== الإعدادات (للمدير العام فقط) ========== */}
                 <Route path="settings/general" element={<GeneralSettingsPage />} />
