@@ -310,11 +310,11 @@ const AddEditShipperPage = () => {
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20 border-2 border-primary">
                   <AvatarImage 
-                    src={`https://www.gravatar.com/avatar/${form.watch('email').trim().toLowerCase()}?s=200&d=identicon`}
+                    src={`https://www.gravatar.com/avatar/${(form.watch('email') || '').trim().toLowerCase()}?s=200&d=identicon`}
                     alt={form.watch('name') || 'صورة التاجر'}
                   />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-white text-2xl font-bold">
-                    {form.watch('name').charAt(0).toUpperCase() || '?'}
+                    {(form.watch('name') || '?').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
