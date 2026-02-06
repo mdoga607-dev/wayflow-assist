@@ -1,11 +1,18 @@
 import { Outlet } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const MainLayout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+
+  // Close sidebar on mobile by default
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
@@ -13,30 +20,31 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* الهيدر ثابت في الأعلى */}
+      {/* Header */}
       <Header onToggleSidebar={toggleSidebar} />
       
       <div className="flex">
-        {/* السايدبار */}
+        {/* Sidebar */}
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         
-        {/* المحتوى الرئيسي */}
+        {/* Main Content */}
         <main 
           className={cn(
             "flex-1 pt-16 min-h-screen transition-all duration-300",
-            isSidebarOpen ? "mr-72" : "mr-0"
+            // Desktop: shift content when sidebar is open
+            !isMobile && isSidebarOpen ? "mr-72" : "mr-0"
           )}
         >
-          <div className="p-6 animate-fade-in">
+          <div className="p-3 sm:p-4 md:p-6 animate-fade-in">
             <Outlet />
           </div>
         </main>
       </div>
       
-      {/* Overlay عند فتح القائمة على الموبايل */}
-      {isSidebarOpen && (
+      {/* Mobile Overlay */}
+      {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

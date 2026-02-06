@@ -220,7 +220,7 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps) => {
     <aside 
       className={cn(
         "fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gradient-to-b from-[#19026d] to-[#040127] z-40 shadow-2xl border-l border-[#b43f52] transition-all duration-300",
-        isOpen ? "w-72 translate-x-0" : "w-72 translate-x-full lg:w-0 lg:translate-x-0"
+        isOpen ? "w-64 sm:w-72 translate-x-0" : "w-64 sm:w-72 translate-x-full"
       )}
       dir="rtl"
     >
