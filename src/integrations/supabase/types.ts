@@ -664,6 +664,63 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          auto_assign: boolean | null
+          company_address: string | null
+          company_city: string | null
+          company_email: string | null
+          company_governorate: string | null
+          company_name: string
+          company_phone: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          maintenance_mode: boolean | null
+          notifications_enabled: boolean | null
+          sms_enabled: boolean | null
+          timezone: string | null
+          updated_at: string | null
+          whatsapp_enabled: boolean | null
+        }
+        Insert: {
+          auto_assign?: boolean | null
+          company_address?: string | null
+          company_city?: string | null
+          company_email?: string | null
+          company_governorate?: string | null
+          company_name?: string
+          company_phone?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          maintenance_mode?: boolean | null
+          notifications_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          whatsapp_enabled?: boolean | null
+        }
+        Update: {
+          auto_assign?: boolean | null
+          company_address?: string | null
+          company_city?: string | null
+          company_email?: string | null
+          company_governorate?: string | null
+          company_name?: string
+          company_phone?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          maintenance_mode?: boolean | null
+          notifications_enabled?: boolean | null
+          sms_enabled?: boolean | null
+          timezone?: string | null
+          updated_at?: string | null
+          whatsapp_enabled?: boolean | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
