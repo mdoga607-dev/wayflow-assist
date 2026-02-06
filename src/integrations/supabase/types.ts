@@ -743,7 +743,104 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_wallet_transaction: {
+        Args: {
+          p_amount: number
+          p_notes: string
+          p_payment_method: string
+          p_reference_number: string
+          p_transaction_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      create_pickup_sheet: {
+        Args: {
+          p_courier_id: string
+          p_created_by: string
+          p_sheet_date: string
+        }
+        Returns: string
+      }
+      delete_pickup_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      delete_sheet: { Args: { p_sheet_id: string }; Returns: undefined }
       delete_unconfirmed_users: { Args: never; Returns: number }
+      delete_wallet_transaction: {
+        Args: { p_transaction_id: string }
+        Returns: undefined
+      }
+      get_courier_overall_report: {
+        Args: { p_courier_id: string; p_date_from?: string; p_date_to?: string }
+        Returns: {
+          completed_pickup_requests: number
+          pending_pickup_requests: number
+          total_pickup_requests: number
+          total_sheets: number
+          wallet_balance: number
+        }[]
+      }
+      get_courier_pickup_requests: {
+        Args: { p_courier_id: string; p_status?: string }
+        Returns: {
+          created_at: string
+          merchant_id: string
+          notes: string
+          pickup_address: string
+          pickup_date: string
+          pickup_time: string
+          request_id: string
+          status: string
+        }[]
+      }
+      get_courier_sheets: {
+        Args: { p_courier_id: string }
+        Returns: {
+          completed_shipments: number
+          created_at: string
+          notes: string
+          pending_shipments: number
+          sheet_date: string
+          sheet_id: string
+          total_shipments: number
+        }[]
+      }
+      get_delegate_reports: {
+        Args: { date_from?: string; date_to?: string }
+        Returns: {
+          commission_due: number
+          delegate_id: string
+          delegate_name: string
+          success_rate: number
+          total_delayed: number
+          total_delivered: number
+          total_returned: number
+        }[]
+      }
+      get_monthly_reports: {
+        Args: { date_from?: string; date_to?: string }
+        Returns: {
+          month_year: string
+          total_commissions: number
+          total_revenue: number
+          total_shipments: number
+        }[]
+      }
+      get_reports_stats: {
+        Args: { date_from?: string; date_to?: string }
+        Returns: {
+          delayed_count: number
+          delivered_count: number
+          pending_count: number
+          returned_count: number
+          total_commissions: number
+          total_revenue: number
+          total_shipments: number
+          transit_count: number
+        }[]
+      }
       get_shipment_by_tracking: {
         Args: { p_phone_last_4: string; p_tracking_number: string }
         Returns: {
@@ -762,12 +859,38 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_wallet_report: {
+        Args: { p_date_from?: string; p_date_to?: string; p_user_id: string }
+        Returns: {
+          amount: number
+          notes: string
+          payment_method: string
+          reference_number: string
+          transaction_date: string
+          transaction_id: string
+          transaction_type: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      reset_wallet_balance: { Args: { p_user_id: string }; Returns: undefined }
+      update_pickup_request_status: {
+        Args: { p_new_status: string; p_request_id: string }
+        Returns: undefined
+      }
+      update_sheet_statistics: {
+        Args: {
+          p_completed_shipments: number
+          p_pending_shipments: number
+          p_sheet_id: string
+          p_total_shipments: number
+        }
+        Returns: undefined
       }
     }
     Enums: {
