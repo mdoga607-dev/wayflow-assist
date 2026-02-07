@@ -73,18 +73,18 @@ const AddTaskPage = () => {
       
       try {
         setDataLoading(true);
-        // نفترض أن المناديب هم مستخدمون بدور 'courier' في جدول profiles
+        // جلب المناديب من جدول delegates
         const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .eq('role', 'courier')
-          .order('full_name');
+          .from('delegates')
+          .select('id, name')
+          .eq('status', 'active')
+          .order('name');
 
         if (error) throw error;
         
         setDelegates(data?.map(d => ({ 
           id: d.id, 
-          name: d.full_name || 'بدون اسم' 
+          name: d.name || 'بدون اسم' 
         })) || []);
       } catch (error: any) {
         console.error('Error fetching delegates:', error);

@@ -68,12 +68,12 @@ const Auth = () => {
       return;
     }
 
-    // ✅ الحصول على دور المستخدم من الميتاداتا
-    const { data: profile } = await supabase
-      .from('profiles')
+    // ✅ الحصول على دور المستخدم من جدول user_roles
+    const { data: roleData } = await supabase
+      .from('user_roles')
       .select('role')
       .eq('user_id', data.user.id)
-      .single();
+      .maybeSingle();
 
     toast({ 
       title: "مرحباً بك", 
@@ -81,10 +81,9 @@ const Auth = () => {
     });
     
     // ✅ توجيه المستخدم حسب دوره
-    if (profile?.role === 'courier') {
-      navigate("/courier-dashboard");
-    } else if (profile?.role === 'shipper') {
-      navigate("/shipper-dashboard");
+    const userRole = roleData?.role;
+    if (userRole === 'guest') {
+      navigate("/guest/orders");
     } else {
       navigate("/app/dashboard");
     }

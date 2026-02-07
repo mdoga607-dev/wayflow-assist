@@ -83,9 +83,10 @@ const DeleteAccountPage = () => {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          deleted_at: new Date().toISOString(),
-          is_deleted: true,
-          deletion_reason: reason.trim()
+          full_name: 'حساب محذوف',
+          phone: null,
+          city: null,
+          avatar_url: null
         })
         .eq('user_id', user.id);
 
