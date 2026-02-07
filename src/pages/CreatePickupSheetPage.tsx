@@ -122,18 +122,17 @@ const CreatePickupSheetPage = () => {
           setSelectedShipments(validIds);
         }
 
-        // تصحيح: إضافة data: قبل اسم المتغير
+        // جلب المناديب من جدول delegates
         const { data: delegatesData, error: delegatesError } = await supabase
-          .from('profiles') // تأكد من اسم الجدول إذا كان profiles أو delegates
-          .select('id, full_name, phone, city')
-          .eq('role', 'courier')
-          .order('full_name');
+          .from('delegates')
+          .select('id, name, phone, city')
+          .eq('status', 'active')
+          .order('name');
 
         if (delegatesError) throw delegatesError;
-        // تحويل البيانات لتناسب الواجهة إذا لزم الأمر
         setDelegates(delegatesData?.map((d: any) => ({
             id: d.id,
-            name: d.full_name,
+            name: d.name,
             phone: d.phone || '',
             city: d.city || ''
         })) || []);
