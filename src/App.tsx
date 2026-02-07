@@ -44,7 +44,7 @@ import PickupRequestsPage from "./pages/PickupRequestsPage";
 import CheckShipmentsPage from "./pages/CheckShipmentsPage";
 import ShipmentsWithoutAreasPage from "./pages/ShipmentsWithoutAreasPage";
 import PrintShipmentsPage from "./pages/PrintShipmentsPage";
-import PaymentReportPage from "./pages/PaymentReportPage";
+import PaymentReportPage from "./pages/balance/PaymentReportPage";
 import ComplaintsPage from "./pages/complaints/ComplaintsPage";
 import ComplaintsArchivePage from "./pages/complaints/ArchivePage";
 import GovernoratesPage from "./pages/areas/GovernoratesPage";
@@ -90,6 +90,8 @@ import AddAreaPage from "./pages/areas/AddAreaPage";
 import AddComplaintPage from "./pages/complaints/AddComplaintPage";
 import ShipperDetails from "./pages/ShipperDetails";
 import AddEditShipperPage from "./pages/shippers/AddEditShipperPage";
+import EditGovernoratePage from "./pages/areas/AddGovernoratePage";
+import DivideAreasPage from "./pages/areas/DivideAreasPage";
 
 // إنشاء نسخة من QueryClient
 const queryClient = new QueryClient();
@@ -144,19 +146,20 @@ const App = () => (
                 <Route path="balance" element={<BalanceManagement />} />
                 <Route path="balance/add" element={<AddBalance />} />
                 <Route path="balance/collection-report" element={<CollectionReportPage />} />
+                  <Route path="balance/payment-report" element={<PaymentReportPage />} />
                 
                 {/* ========== الشيتات ========== */}
                 <Route path="sheets" element={<SheetsPage />} />
                 <Route path="sheets/create-pickup" element={<CreatePickupSheetPage />} />
                 <Route path="sheets/pickup" element={<PickupSheetsPage />} />
                {/* ========== المناديب ========== */}
-    <Route path="delegates" element={<DelegatesManagement />} />
-    <Route path="delegates/add" element={<AddDelegatePage />} />
-    <Route path="delegate/:id" element={<DelegateDetails />} /> {/* ✅ مفرد بدون s */}
-  <Route path="delegate/:id/edit" element={<AddDelegatePage />} />
-    {/* <Route path="delegates/stats" element={<DelegateStats />} /> */}
-    <Route path="delegates/shipments" element={<DelegateShipments />} />// الشحنات{/* ✅ مسار شحنات المناديب */}
-                
+              <Route path="delegates" element={<DelegatesManagement />} />
+              <Route path="delegates/add" element={<AddDelegatePage />} />
+              <Route path="delegate/:id" element={<DelegateDetails />} /> {/* ✅ مفرد بدون s */}
+               <Route path="delegate/:id/edit" element={<AddDelegatePage />} />
+              <Route path="delegates/stats" element={<DelegateStats />} />
+              <Route path="delegates/shipments" element={<DelegateShipments />} />// الشحنات{/* ✅ مسار شحنات المناديب */}
+                          
                 {/* ========== التجار ========== */}
                 <Route path="shippers" element={<ShippersManagement />} />
                 <Route path="shippers/add" element={<AddShipperPage />} />
@@ -184,10 +187,14 @@ const App = () => (
                 <Route path="complaints/add" element={<AddComplaintPage />} />
                 
                 {/* ========== المناطق ========== */}
-                <Route path="areas" element={<AreasPage />} />
-                <Route path="areas/governorates" element={<GovernoratesPage />} />
-                <Route path="areas/add-governorate" element={<AddGovernoratePage />} />
-                <Route path="areas/add" element={<AddAreaPage />} />
+                <Route path="areas">
+          <Route index element={<AreasPage />} />
+            <Route path="governorates" element={<GovernoratesPage />} />
+            <Route path="add-governorate" element={<AddGovernoratePage />} />
+            <Route path="edit-governorate/:id" element={<EditGovernoratePage />} /> {/* ✅ هذا هو المسار الصحيح */}
+            <Route path="add" element={<AddAreaPage />} />
+            <Route path="divide" element={<DivideAreasPage />} />
+          </Route>
                 
                 {/* ========== المهام ========== */}
                 <Route path="tasks" element={<TasksPage />} />

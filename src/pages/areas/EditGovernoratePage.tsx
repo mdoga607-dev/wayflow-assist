@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/areas/EditGovernoratePage.tsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   MapPin, Edit, Save, XCircle, RefreshCcw, Loader2, AlertCircle, 
-  CheckCircle, Info, ChevronLeft, Truck, Clock
+  CheckCircle, Info, ChevronLeft, Truck, Clock, XCircle as XCircleIcon
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';

@@ -121,7 +121,6 @@ const menuItems: MenuItem[] = [
       { icon: Layers, label: "المحافظات", path: "/app/areas/governorates", roles: ["head_manager", "manager"] },
       { icon: MapPin, label: "المناطق", path: "/app/areas", roles: ["head_manager", "manager"] },
       { icon: Plus, label: "تقسيم المناطق", path: "/app/areas/divide", roles: ["head_manager", "manager"] },
-      { icon: Search, label: "الكلمات الدلالية للمناطق", path: "/app/areas/keywords", roles: ["head_manager", "manager"] },
     ]
   },
   {

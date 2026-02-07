@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/DelegateShipments.tsx
 import { useState, useEffect } from "react";
-import { User, Package, CheckCircle, Clock, TrendingUp, Phone, MapPin, Filter, Eye, RefreshCcw, AlertCircle, PieChart as PieChartIconLucide, Wallet as WalletIcon } from "lucide-react";
+import { 
+  User, Package, CheckCircle, Clock, TrendingUp, Phone, MapPin, 
+  Filter, Eye, RefreshCcw, AlertCircle, PieChart as PieChartIcon, 
+  Wallet as WalletIcon, Truck 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,11 +17,12 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
-  PieChart as RechartsPieChart,
+  PieChart,
   Pie,
   Cell,
   ResponsiveContainer,
   Tooltip,
+  Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,13 +34,14 @@ import { toast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 interface Delegate {
   id: string;
   name: string;
   phone: string;
   city: string;
-  avatar: string;
+  avatar_url: string | null; // ← استخدم avatar_url بدل avatar حرف
   balance: number;
   commission_due: number;
   stats: {
@@ -72,18 +78,18 @@ interface Shipment {
 
 const statusLabels: Record<string, string> = {
   delivered: "تم التسليم",
-  transit: "فى الطريق",
+  transit: "في الطريق",
   pending: "منتظر",
   delayed: "متأخر",
   returned: "مرتجع",
 };
 
 const statusColors: Record<string, string> = {
-  delivered: "bg-green-100 text-green-800",
-  transit: "bg-blue-100 text-blue-800",
-  pending: "bg-yellow-100 text-yellow-800",
-  delayed: "bg-red-100 text-red-800",
-  returned: "bg-purple-100 text-purple-800",
+  delivered: "bg-green-100 text-green-800 border-green-200",
+  transit: "bg-blue-100 text-blue-800 border-blue-200",
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  delayed: "bg-red-100 text-red-800 border-red-200",
+  returned: "bg-purple-100 text-purple-800 border-purple-200",
 };
 
 const DelegateShipments = () => {
@@ -96,12 +102,10 @@ const DelegateShipments = () => {
   const [error, setError] = useState<string | null>(null);
   const [shipmentsLoading, setShipmentsLoading] = useState(false);
 
-  // اشتقاق المندوب المحدد من المعرف
   const selectedDelegate = selectedDelegateId 
     ? delegates.find(d => d.id === selectedDelegateId) || null 
     : null;
 
-  // جلب بيانات المناديب من قاعدة البيانات
   useEffect(() => {
     if (authLoading) return;
 
@@ -134,9 +138,9 @@ const DelegateShipments = () => {
           return {
             id: delegate.id,
             name: delegate.name,
-            phone: delegate.phone || 'مش متاح',
-            city: delegate.city || 'مش محدد',
-            avatar: delegate.name.charAt(0).toUpperCase() || 'م',
+            phone: delegate.phone || 'غير متوفر',
+            city: delegate.city || 'غير محدد',
+            avatar_url: delegate.avatar_url,
             balance: delegate.balance || 0,
             commission_due: delegate.commission_due || 0,
             stats: {
@@ -155,9 +159,9 @@ const DelegateShipments = () => {
           setSelectedDelegateId(processedDelegates[0].id);
           fetchDelegateShipments(processedDelegates[0].id);
         }
-      } catch (err) {
-        console.error('خطأ في جلب بيانات المناديب:', err);
-        setError('فشل تحميل بيانات المناديب. يرجى المحاولة مرة تانية.');
+      } catch (err: any) {
+        console.error('خطأ في جلب المناديب:', err);
+        setError(err.message || 'فشل تحميل بيانات المناديب');
         toast({
           title: "خطأ",
           description: "فشل تحميل بيانات المناديب",
@@ -171,7 +175,6 @@ const DelegateShipments = () => {
     fetchDelegates();
   }, [authLoading]);
 
-  // جلب شحنات المندوب المحدد
   const fetchDelegateShipments = async (delegateId: string) => {
     try {
       setShipmentsLoading(true);
@@ -198,12 +201,12 @@ const DelegateShipments = () => {
 
       const newShipments = shipmentsData.map(s => ({
         id: s.id,
-        customer: s.recipient_name || 'مش معروف',
-        city: s.recipient_city || 'مش محدد',
+        customer: s.recipient_name || 'غير معروف',
+        city: s.recipient_city || 'غير محدد',
         status: s.status || 'pending',
         amount: s.cod_amount || 0,
         tracking_number: s.tracking_number || '---',
-        recipient_address: s.recipient_address || 'مش محدد',
+        recipient_address: s.recipient_address || 'غير محدد',
         created_at: s.created_at
       }));
 
@@ -212,8 +215,8 @@ const DelegateShipments = () => {
           ? { ...delegate, shipments: newShipments }
           : delegate
       ));
-    } catch (err) {
-      console.error('خطأ في جلب شحنات المندوب:', err);
+    } catch (err: any) {
+      console.error('خطأ في جلب الشحنات:', err);
       toast({
         title: "خطأ",
         description: "فشل تحميل شحنات المندوب",
@@ -224,22 +227,15 @@ const DelegateShipments = () => {
     }
   };
 
-  // الحصول على المحافظات الفريدة من المناديب
   const cities = [...new Set(delegates.map(d => d.city).filter(Boolean))];
-  
-  // تصفية المناديب حسب المدينة
-  const filteredDelegates = delegates.filter((d) => 
-    cityFilter === "all" || d.city === cityFilter
-  );
+  const filteredDelegates = delegates.filter(d => cityFilter === "all" || d.city === cityFilter);
 
-  // بيانات المخطط البياني
   const chartData = selectedDelegate ? [
-    { name: "تم التسليم", value: selectedDelegate.stats.delivered, color: "hsl(145, 65%, 42%)" },
-    { name: "فى الطريق", value: selectedDelegate.stats.pending, color: "hsl(210, 90%, 55%)" },
-    { name: "متأخر", value: selectedDelegate.stats.delayed, color: "hsl(0, 84%, 60%)" },
+    { name: "تم التسليم", value: selectedDelegate.stats.delivered, color: "#22c55e" },
+    { name: "في الطريق", value: selectedDelegate.stats.pending, color: "#3b82f6" },
+    { name: "متأخر", value: selectedDelegate.stats.delayed, color: "#ef4444" },
   ].filter(item => item.value > 0) : [];
 
-  // حساب النسب
   const deliveryRate = selectedDelegate && selectedDelegate.stats.total > 0
     ? Math.round((selectedDelegate.stats.delivered / selectedDelegate.stats.total) * 100)
     : 0;
@@ -250,11 +246,11 @@ const DelegateShipments = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center p-8 bg-card rounded-xl shadow-lg border border-border">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground">جاري تحميل بيانات المناديب...</p>
-          <p className="text-sm text-muted-foreground mt-1">يرجى الانتظار</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-10 bg-white rounded-2xl shadow-xl border border-gray-200 max-w-md w-full">
+          <Loader2 className="h-14 w-14 animate-spin text-primary mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">جاري تحميل بيانات المناديب...</h2>
+          <p className="text-gray-600">يرجى الانتظار لحظات</p>
         </div>
       </div>
     );
@@ -262,31 +258,31 @@ const DelegateShipments = () => {
 
   if (error) {
     return (
-      <div className="container py-8 max-w-4xl mx-auto">
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2 justify-center">
-              <AlertCircle className="h-6 w-6" />
-              خطأ في التحميل
-            </CardTitle>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <Card className="w-full max-w-lg border-red-200 shadow-xl">
+          <CardHeader className="text-center pb-2">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <CardTitle className="text-2xl text-red-700 font-bold">حدث خطأ</CardTitle>
           </CardHeader>
-          <CardContent className="text-center py-8">
-            <p className="text-muted-foreground mb-6 text-lg max-w-2xl mx-auto">{error}</p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <CardContent className="text-center space-y-6">
+            <p className="text-lg text-gray-700">{error}</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 onClick={() => window.location.reload()} 
                 variant="destructive"
-                className="gap-2 px-6 py-3"
+                size="lg"
+                className="gap-2 px-8 py-6 text-lg"
               >
-                <RefreshCcw className="h-4 w-4" />
+                <RefreshCcw className="h-5 w-5" />
                 إعادة المحاولة
               </Button>
               <Button 
                 onClick={() => navigate('/app/delegates')} 
                 variant="outline"
-                className="gap-2 px-6 py-3"
+                size="lg"
+                className="gap-2 px-8 py-6 text-lg"
               >
-                <User className="h-4 w-4" />
+                <User className="h-5 w-5" />
                 إدارة المناديب
               </Button>
             </div>
@@ -298,26 +294,24 @@ const DelegateShipments = () => {
 
   if (delegates.length === 0) {
     return (
-      <div className="container py-12">
-        <Card className="max-w-2xl mx-auto border-dashed border-2 border-border">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <Card className="w-full max-w-lg border-dashed border-4 border-gray-300 shadow-xl">
           <CardContent className="py-16 text-center">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-              <Package className="h-10 w-10 text-muted-foreground" />
+            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+              <Truck className="h-12 w-12 text-gray-500" />
             </div>
-            <CardTitle className="text-2xl mb-3">مفيش مناديب نشطين</CardTitle>
-            <CardDescription className="max-w-md mx-auto text-balance">
-              مفيش مناديب نشطين في النظام حالياً. يرجى إضافة مناديب جدد من صفحة إدارة المناديب.
+            <CardTitle className="text-3xl font-bold text-gray-800 mb-4">لا يوجد مناديب نشطين</CardTitle>
+            <CardDescription className="text-xl text-gray-600 mb-8">
+              لا يوجد مناديب نشطين في النظام حاليًا. يمكنك إضافة مناديب جدد من صفحة إدارة المناديب.
             </CardDescription>
-            <div className="mt-8">
-              <Button 
-                onClick={() => navigate('/app/delegates')} 
-                size="lg"
-                className="gap-2 px-8 py-4 text-lg"
-              >
-                <User className="h-5 w-5" />
-                الذهاب إلى إدارة المناديب
-              </Button>
-            </div>
+            <Button 
+              onClick={() => navigate('/app/delegates')} 
+              size="lg"
+              className="gap-3 px-10 py-7 text-xl shadow-lg"
+            >
+              <User className="h-6 w-6" />
+              إدارة المناديب
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -325,417 +319,414 @@ const DelegateShipments = () => {
   }
 
   return (
-    <div className="container py-8 space-y-8 max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8" dir="rtl">
-      {/* رأس الصفحة */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3 text-foreground">
-            <TruckIcon className="h-9 w-9 text-primary" />
-            شحنات المندوبين
-          </h1>
-          <p className="text-muted-foreground text-base md:text-lg">
-            عرض وإدارة شحنات كل مندوب في النظام ({delegates.length} مندوب نشط)
-          </p>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8" dir="rtl">
+      <div className="max-w-screen-2xl mx-auto space-y-10">
+        {/* رأس الصفحة */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+          <div className="space-y-3">
+            <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-4 text-gray-900">
+              <Truck className="h-10 w-10 text-primary flex-shrink-0" />
+              شحنات المندوبين
+            </h1>
+            <p className="text-lg text-gray-600">
+              عرض ومتابعة شحنات جميع المناديب النشطين ({delegates.length} مندوب)
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate('/app/delegates')}
+              className="gap-3 h-14 px-8 text-lg border-2"
+            >
+              <User className="h-5 w-5" />
+              إدارة المناديب
+            </Button>
+            <Button 
+              size="lg"
+              onClick={() => navigate('/app/shipments/add')}
+              className="gap-3 h-14 px-8 text-lg bg-primary hover:bg-primary/90 shadow-lg"
+            >
+              <Package className="h-5 w-5" />
+              إضافة شحنة جديدة
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-4">
-          <Button variant="outline" onClick={() => navigate('/app/delegates')} className="gap-2 h-12 px-6 text-base">
-            <User className="h-5 w-5" />
-            إدارة المناديب
-          </Button>
-          <Button onClick={() => navigate('/app/shipments/add')} className="gap-2 bg-primary hover:bg-primary/90 h-12 px-6 text-base">
-            <Package className="h-5 w-5" />
-            إضافة شحنة جديدة
-          </Button>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* قائمة المناديب - عمود أيسر */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="rounded-2xl shadow-lg border-border/50 h-full flex flex-col overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 border-b border-border/50 bg-muted/30 px-6 py-4">
-              <CardTitle className="text-xl font-semibold text-foreground">المندوبين</CardTitle>
-              <Select value={cityFilter} onValueChange={setCityFilter}>
-                <SelectTrigger className="w-[160px] h-10 text-base">
-                  <MapPin className="h-4 w-4 ml-2 text-muted-foreground flex-shrink-0" />
-                  <SelectValue placeholder="اختر المحافظة" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل المحافظات</SelectItem>
-                  {cities.map((city) => (
-                    <SelectItem key={`city-${city}`} value={city} className="cursor-pointer text-base py-2">
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden pt-4 px-0">
-              <div className="h-full overflow-y-auto px-4 pb-4 custom-scrollbar">
-                <div className="space-y-3">
-                  {filteredDelegates.map((delegate) => (
-                    <button
-                      key={delegate.id}
-                      onClick={() => {
-                        setSelectedDelegateId(delegate.id);
-                        fetchDelegateShipments(delegate.id);
-                      }}
-                      className={cn(
-                        "w-full p-4 rounded-xl text-right transition-all duration-200 flex items-center gap-4 hover:bg-muted/50 border border-transparent hover:shadow-md",
-                        selectedDelegateId === delegate.id
-                          ? "bg-primary/10 border-primary/30 shadow-md"
-                          : "hover:border-border/50"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0 border-2",
-                        selectedDelegateId === delegate.id
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-primary/10 text-primary border-primary/20"
-                      )}>
-                        {delegate.avatar}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* قائمة المناديب */}
+          <div className="lg:col-span-4 xl:col-span-3 space-y-6">
+            <Card className="rounded-2xl shadow-xl border-gray-200 overflow-hidden h-full flex flex-col">
+              <CardHeader className="px-6 py-5 bg-gray-50/80 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl font-bold text-gray-900">المناديب النشطين</CardTitle>
+                  <Select value={cityFilter} onValueChange={setCityFilter}>
+                    <SelectTrigger className="w-48 h-11 text-base border-2">
+                      <MapPin className="h-5 w-5 mr-2 text-gray-500" />
+                      <SelectValue placeholder="جميع المحافظات" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-80">
+                      <SelectItem value="all" className="text-base py-3">جميع المحافظات</SelectItem>
+                      {cities.map(city => (
+                        <SelectItem key={city} value={city} className="text-base py-3">{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 p-0 overflow-hidden">
+                <div className="h-full overflow-y-auto px-4 py-3 custom-scrollbar">
+                  <div className="space-y-3">
+                    {filteredDelegates.map(delegate => (
+                      <button
+                        key={delegate.id}
+                        onClick={() => {
+                          setSelectedDelegateId(delegate.id);
+                          fetchDelegateShipments(delegate.id);
+                        }}
+                        className={cn(
+                          "w-full p-5 rounded-2xl transition-all duration-200 flex items-center gap-5 border-2 hover:shadow-md",
+                          selectedDelegateId === delegate.id
+                            ? "border-primary bg-primary/5 shadow-md"
+                            : "border-transparent hover:border-gray-200 bg-white"
+                        )}
+                      >
+                        <Avatar className="h-16 w-16 border-2 border-gray-200 flex-shrink-0">
+                          {delegate.avatar_url ? (
+                            <AvatarImage src={delegate.avatar_url} alt={delegate.name} />
+                          ) : (
+                            <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                              {delegate.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex-1 min-w-0 text-right">
+                          <p className="text-xl font-bold text-gray-900 truncate">{delegate.name}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2 text-gray-600 text-base">
+                              <MapPin className="h-4 w-4" />
+                              {delegate.city}
+                            </div>
+                            <Badge 
+                              variant="outline"
+                              className={cn(
+                                "text-base px-3 py-1",
+                                delegate.stats.delivered > delegate.stats.total * 0.75 ? "border-green-500 text-green-700" : ""
+                              )}
+                            >
+                              {delegate.stats.delivered} / {delegate.stats.total}
+                            </Badge>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+
+                    {filteredDelegates.length === 0 && (
+                      <div className="text-center py-16 text-gray-500">
+                        <MapPin className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-xl font-medium">لا يوجد مناديب في هذه المحافظة</p>
+                        <p className="mt-2">جرب اختيار محافظة أخرى</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-lg truncate text-foreground">{delegate.name}</p>
-                        <div className="flex items-center justify-between mt-1.5">
-                          <p className={cn(
-                            "text-sm truncate",
-                            selectedDelegateId === delegate.id
-                              ? "text-primary font-medium"
-                              : "text-muted-foreground"
-                          )}>
-                            <MapPin className="h-4 w-4 inline-block mr-1.5 align-middle" />
-                            {delegate.city} • {delegate.stats.total} شحنة
-                          </p>
-                          <Badge 
-                            variant={delegate.stats.delivered > 0 ? "default" : "secondary"}
-                            className={cn(
-                              "px-3 py-1 text-xs h-6 font-medium",
-                              delegate.stats.delivered > delegate.stats.total * 0.8 && "bg-green-600 hover:bg-green-600"
-                            )}
-                          >
-                            {delegate.stats.delivered} مُسلّم
-                          </Badge>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* الجزء الرئيسي */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+            {selectedDelegate ? (
+              <>
+                {/* معلومات المندوب */}
+                <Card className="rounded-2xl shadow-xl border-gray-200 overflow-hidden">
+                  <CardContent className="p-8">
+                    <div className="flex flex-col md:flex-row gap-10 items-start">
+                      <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-gray-100 shadow-xl flex-shrink-0">
+                        {selectedDelegate.avatar_url ? (
+                          <AvatarImage src={selectedDelegate.avatar_url} alt={selectedDelegate.name} />
+                        ) : (
+                          <AvatarFallback className="bg-gradient-to-br from-primary to-blue-600 text-white text-5xl font-bold">
+                            {selectedDelegate.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+
+                      <div className="flex-1 space-y-6">
+                        <div>
+                          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+                            {selectedDelegate.name}
+                          </h2>
+                          <div className="flex flex-wrap gap-6 mt-5 text-gray-700 text-lg">
+                            <div className="flex items-center gap-3">
+                              <Phone className="h-6 w-6 text-primary" />
+                              <span dir="ltr" className="font-medium">{selectedDelegate.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <MapPin className="h-6 w-6 text-primary" />
+                              <span className="font-medium">{selectedDelegate.city}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-6">
+                          <div className="bg-green-50 border border-green-200 rounded-xl px-6 py-4 text-center min-w-[180px]">
+                            <p className="text-sm text-green-700 mb-1">معدل التسليم</p>
+                            <p className="text-4xl font-bold text-green-700">{deliveryRate}%</p>
+                          </div>
+                          <div className="bg-blue-50 border border-blue-200 rounded-xl px-6 py-4 text-center min-w-[180px]">
+                            <p className="text-sm text-blue-700 mb-1">إجمالي الشحنات</p>
+                            <p className="text-4xl font-bold text-blue-700">{selectedDelegate.stats.total}</p>
+                          </div>
                         </div>
                       </div>
-                    </button>
-                  ))}
-                  {filteredDelegates.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <MapPin className="h-10 w-10 mx-auto mb-4 opacity-50" />
-                      <p className="font-medium text-lg">مفيش مناديب في المحافظة دي</p>
-                      <p className="text-base mt-2">جرب اختيار محافظة تانية</p>
                     </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  </CardContent>
+                </Card>
 
-        {/* معلومات المندوب والإحصائيات - عمود أيمن */}
-        <div className="lg:col-span-3 space-y-8">
-          {/* رأس الصفحة - معلومات المندوب */}
-          <Card className="rounded-2xl shadow-lg border-border/50 overflow-hidden">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-                <div className="flex items-start gap-5 md:gap-6">
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary/90 to-primary flex items-center justify-center text-3xl md:text-4xl font-bold text-primary-foreground border-2 border-primary/20 shadow-md flex-shrink-0">
-                    {selectedDelegate?.avatar}
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                      {selectedDelegate?.name}
-                    </h2>
-                    <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-base">
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-5 w-5 text-primary flex-shrink-0" />
-                        <span dir="ltr" className="font-mono font-medium">{selectedDelegate?.phone}</span>
+                {/* الإحصائيات */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard 
+                    icon={<Package className="h-8 w-8 text-blue-600" />}
+                    label="إجمالي الشحنات"
+                    value={selectedDelegate.stats.total.toString()}
+                    color="text-blue-700"
+                    bgColor="bg-blue-50"
+                  />
+                  <StatCard 
+                    icon={<CheckCircle className="h-8 w-8 text-green-600" />}
+                    label="تم التسليم"
+                    value={selectedDelegate.stats.delivered.toString()}
+                    color="text-green-700"
+                    bgColor="bg-green-50"
+                  />
+                  <StatCard 
+                    icon={<Clock className="h-8 w-8 text-red-600" />}
+                    label="متأخر"
+                    value={selectedDelegate.stats.delayed.toString()}
+                    color="text-red-700"
+                    bgColor="bg-red-50"
+                  />
+                  <StatCard 
+                    icon={<WalletIcon className="h-8 w-8 text-indigo-600" />}
+                    label="الرصيد المستحق"
+                    value={`${selectedDelegate.balance.toLocaleString()} ج.م`}
+                    color="text-indigo-700"
+                    bgColor="bg-indigo-50"
+                  />
+                </div>
+
+                {/* المخططات */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <Card className="rounded-2xl shadow-xl border-gray-200">
+                    <CardHeader className="pb-6 border-b bg-gray-50">
+                      <CardTitle className="text-xl font-bold flex items-center gap-3">
+                        <PieChartIcon className="h-6 w-6 text-primary" />
+                        توزيع حالات الشحنات
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-8">
+                      <div className="h-96">
+                        {chartData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={chartData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={70}
+                                outerRadius={110}
+                                paddingAngle={4}
+                                dataKey="value"
+                              >
+                                {chartData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'white',
+                                  borderRadius: '12px',
+                                  border: '1px solid #e5e7eb',
+                                  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                                  direction: 'rtl'
+                                }}
+                              />
+                              <Legend 
+                                verticalAlign="bottom" 
+                                height={40}
+                                iconSize={14}
+                                iconType="circle"
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-gray-500">
+                            <div className="text-center">
+                              <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                              <p className="text-xl font-medium">لا توجد بيانات شحنات بعد</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
-                        <span className="font-medium">{selectedDelegate?.city}</span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="rounded-2xl shadow-xl border-gray-200">
+                    <CardHeader className="pb-6 border-b bg-gray-50">
+                      <CardTitle className="text-xl font-bold flex items-center gap-3">
+                        <TrendingUp className="h-6 w-6 text-primary" />
+                        أداء المندوب
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-10 space-y-8">
+                      <div className="space-y-6">
+                        <div>
+                          <div className="flex justify-between mb-3 text-lg font-medium">
+                            <span>نسبة التسليم الناجح</span>
+                            <span className="text-green-700 font-bold">{deliveryRate}%</span>
+                          </div>
+                          <Progress value={deliveryRate} className="h-4 rounded-full bg-green-100" />
+                        </div>
+                        <div>
+                          <div className="flex justify-between mb-3 text-lg font-medium">
+                            <span>نسبة التأخير</span>
+                            <span className="text-red-700 font-bold">{delayRate}%</span>
+                          </div>
+                          <Progress value={delayRate} className="h-4 rounded-full bg-red-100" />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-full">
-                        <Package className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="text-sm font-medium">إجمالى الشحنات: {selectedDelegate?.stats.total}</span>
+
+                      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 text-center">
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                          <WalletIcon className="h-7 w-7 text-indigo-600" />
+                          <span className="text-xl font-bold text-indigo-800">الرصيد المستحق</span>
+                        </div>
+                        <p className="text-4xl font-bold text-indigo-700">
+                          {selectedDelegate.balance.toLocaleString()} <span className="text-2xl">ج.م</span>
+                        </p>
                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* جدول الشحنات */}
+                <Card className="rounded-2xl shadow-xl border-gray-200 overflow-hidden">
+                  <CardHeader className="px-8 py-6 border-b bg-gray-50">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div>
+                        <CardTitle className="text-2xl font-bold text-gray-900">أحدث الشحنات</CardTitle>
+                        <CardDescription className="text-lg mt-2">
+                          آخر 10 شحنات تم تعيينها لهذا المندوب
+                        </CardDescription>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="lg"
+                        onClick={() => selectedDelegate && navigate(`/app/delegate/${selectedDelegate.id}`)}
+                        className="gap-3 h-14 px-8 text-lg border-2"
+                        disabled={!selectedDelegate}
+                      >
+                        <Eye className="h-5 w-5" />
+                        عرض التفاصيل الكاملة
+                      </Button>
                     </div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center md:items-end justify-center text-center md:text-right w-full md:w-auto mt-6 md:mt-0">
-                  <div className="flex items-end gap-3 mb-3">
-                    <TrendingUp className="h-8 w-8 text-primary" />
-                    <span className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                      {deliveryRate}%
-                    </span>
-                  </div>
-                  <p className="text-base font-medium text-muted-foreground mb-3">معدل التسليم الناجح</p>
-                  <div className="w-full max-w-[240px]">
-                    <Progress value={deliveryRate} className="h-3 rounded-full bg-primary/10" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* بطاقات الإحصائيات */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard 
-              icon={<Package className="h-7 w-7 text-primary" />}
-              label="إجمالى الشحنات" 
-              value={selectedDelegate?.stats.total.toString() || "0"} 
-              color="text-primary"
-              bgColor="bg-primary/10"
-            />
-            <StatCard 
-              icon={<CheckCircle className="h-7 w-7 text-green-600" />}
-              label="تم التسليم" 
-              value={selectedDelegate?.stats.delivered.toString() || "0"} 
-              color="text-green-600"
-              bgColor="bg-green-100"
-            />
-            <StatCard 
-              icon={<TruckIcon className="h-7 w-7 text-blue-600" />}
-              label="فى الطريق" 
-              value={selectedDelegate?.stats.pending.toString() || "0"} 
-              color="text-blue-600"
-              bgColor="bg-blue-100"
-            />
-            <StatCard 
-              icon={<Clock className="h-7 w-7 text-red-600" />}
-              label="متأخرة" 
-              value={selectedDelegate?.stats.delayed.toString() || "0"} 
-              color="text-red-600"
-              bgColor="bg-red-100"
-            />
-          </div>
-
-          {/* المخططات البيانية */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* مخطط توزيع الشحنات */}
-            <Card className="rounded-2xl shadow-lg border-border/50 h-full flex flex-col overflow-hidden">
-              <CardHeader className="pb-6 border-b border-border/50 bg-muted/30 px-6 py-4">
-                <CardTitle className="flex items-center gap-2.5 text-xl font-semibold text-foreground">
-                  <PieChartIconLucide className="h-6 w-6 text-primary" />
-                  توزيع الشحنات حسب الحالة
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground mt-2">
-                  نسب الشحنات حسب حالة التوصيل للمندوب المحدد
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 pt-6 px-6 pb-6">
-                <div className="h-full min-h-[320px] flex items-center justify-center">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart width={400} height={400}>
-                        <Pie
-                          data={chartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={80}
-                          outerRadius={120}
-                          paddingAngle={3}
-                          dataKey="value"
-                          labelLine={false}
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {shipmentsLoading ? (
+                      <div className="flex flex-col items-center justify-center py-32 bg-gray-50/50">
+                        <Loader2 className="h-14 w-14 animate-spin text-primary mb-6" />
+                        <p className="text-xl font-medium text-gray-700">جاري تحميل الشحنات...</p>
+                      </div>
+                    ) : selectedDelegate?.shipments?.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
+                              <TableHead className="text-right px-8 py-5 text-lg font-semibold text-gray-800 w-[160px]">رقم الشحنة</TableHead>
+                              <TableHead className="text-right px-8 py-5 text-lg font-semibold text-gray-800 w-[220px]">العميل</TableHead>
+                              <TableHead className="text-right px-8 py-5 text-lg font-semibold text-gray-800 min-w-[300px]">العنوان</TableHead>
+                              <TableHead className="text-right px-8 py-5 text-lg font-semibold text-gray-800 w-[140px]">الحالة</TableHead>
+                              <TableHead className="text-right px-8 py-5 text-lg font-semibold text-gray-800 w-[140px]">المبلغ</TableHead>
+                              <TableHead className="text-right px-8 py-5 text-lg font-semibold text-gray-800 w-[180px]">التاريخ</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedDelegate.shipments.map(shipment => (
+                              <TableRow 
+                                key={shipment.id}
+                                className="hover:bg-gray-50/80 transition-colors border-b border-gray-100 cursor-pointer"
+                                onClick={() => navigate(`/app/shipments/${shipment.id}`)}
+                              >
+                                <TableCell className="px-8 py-5 font-mono text-lg font-semibold text-primary">
+                                  {shipment.tracking_number}
+                                </TableCell>
+                                <TableCell className="px-8 py-5 text-lg font-medium text-gray-900">
+                                  {shipment.customer}
+                                </TableCell>
+                                <TableCell className="px-8 py-5 text-base text-gray-700">
+                                  {shipment.recipient_address}
+                                </TableCell>
+                                <TableCell className="px-8 py-5">
+                                  <Badge 
+                                    variant="outline"
+                                    className={cn(
+                                      "px-4 py-2 text-base font-medium rounded-full",
+                                      statusColors[shipment.status] || "bg-gray-100 text-gray-800 border-gray-200"
+                                    )}
+                                  >
+                                    {statusLabels[shipment.status] || shipment.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-8 py-5 text-lg font-bold text-green-700">
+                                  {shipment.amount.toLocaleString()} ج.م
+                                </TableCell>
+                                <TableCell className="px-8 py-5 text-base text-gray-600 font-medium">
+                                  {format(new Date(shipment.created_at), 'dd/MM HH:mm', { locale: ar })}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="py-32 text-center bg-gray-50/50">
+                        <div className="w-28 h-28 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-8">
+                          <Package className="h-14 w-14 text-gray-500" />
+                        </div>
+                        <p className="text-3xl font-bold text-gray-800 mb-4">لا توجد شحنات بعد</p>
+                        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+                          سيتم عرض الشحنات هنا بمجرد تعيين شحنات جديدة لهذا المندوب
+                        </p>
+                        <Button 
+                          size="lg"
+                          className="gap-3 px-10 py-7 text-xl shadow-lg"
+                          onClick={() => navigate('/app/shipments/add')}
                         >
-                          {chartData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={entry.color} 
-                              stroke="hsl(var(--background))"
-                              strokeWidth={2}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "10px",
-                            direction: "rtl",
-                            fontSize: "14px",
-                            padding: "10px"
-                          }}
-                          formatter={(value: number) => [`${value.toLocaleString()} شحنة`, "العدد"]}
-                          labelFormatter={(label) => label}
-                        />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="text-center text-muted-foreground p-6">
-                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="font-medium text-xl">مفيش شحنات لعرضها</p>
-                      <p className="text-base mt-2">المندوب ماعندوش شحنات حالية</p>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-6 grid grid-cols-3 gap-4 pt-4 border-t border-border/50">
-                  {chartData.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2.5 text-base">
-                      <div 
-                        className="w-4 h-4 rounded-full flex-shrink-0" 
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* أداء المندوب */}
-            <Card className="rounded-2xl shadow-lg border-border/50 h-full flex flex-col overflow-hidden">
-              <CardHeader className="pb-6 border-b border-border/50 bg-muted/30 px-6 py-4">
-                <CardTitle className="flex items-center gap-2.5 text-xl font-semibold text-foreground">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                  أداء المندوب
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground mt-2">
-                  مؤشرات الأداء الرئيسية للمندوب المحدد
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 pt-6 px-6 pb-6 space-y-8">
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between text-base font-medium mb-2.5">
-                      <span className="text-foreground">نسبة التسليم الناجح</span>
-                      <span className="font-bold text-green-600">{deliveryRate}%</span>
-                    </div>
-                    <Progress 
-                      value={deliveryRate} 
-                      className="h-3 rounded-full bg-green-100"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-base font-medium mb-2.5">
-                      <span className="text-foreground">نسبة التأخير</span>
-                      <span className="font-bold text-red-600">{delayRate}%</span>
-                    </div>
-                    <Progress 
-                      value={delayRate}
-                      className="h-3 rounded-full bg-red-100"
-                    />
-                  </div>
-                </div>
-                
-                <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50/30 rounded-2xl border border-blue-200 mt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <WalletIcon className="h-6 w-6 text-primary" />
-                      <span className="text-lg font-semibold text-foreground">الرصيد المستحق</span>
-                    </div>
-                    <span className="text-2xl font-bold text-primary">
-                      {selectedDelegate?.balance?.toLocaleString() || '0'} <span className="text-lg">ج.م</span>
-                    </span>
-                  </div>
-                  <p className="text-sm text-blue-700 mt-3 text-right">
-                    يشمل عمولات الشحنات المسلمة خلال الأسبوع الماضي
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* جدول الشحنات */}
-          <Card className="rounded-2xl shadow-lg border-border/50 overflow-hidden">
-            <CardHeader className="border-b border-border/50 bg-muted/30 px-6 py-4">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="space-y-2">
-                  <CardTitle className="text-xl font-semibold text-foreground">أحدث الشحنات</CardTitle>
-                  <CardDescription className="text-base text-muted-foreground">
-                    آخر 10 شحنات تم تعيينها لهذا المندوب
-                  </CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => selectedDelegate && navigate(`/app/delegate/${selectedDelegate.id}`)}
-                  className="gap-2 h-12 px-6 text-base"
-                  disabled={!selectedDelegate}
-                >
-                  <Eye className="h-5 w-5" />
-                  عرض التفاصيل الكاملة
-                </Button>
+                          <Package className="h-6 w-6" />
+                          إضافة شحنة جديدة
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-32 bg-white rounded-2xl shadow-xl border border-gray-200">
+                <Truck className="h-24 w-24 text-gray-400 mb-8" />
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">اختر مندوبًا</h2>
+                <p className="text-xl text-gray-600 max-w-xl text-center">
+                  اختر أحد المناديب من القائمة على اليسار لعرض شحناته وإحصائياته
+                </p>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {shipmentsLoading ? (
-                <div className="flex flex-col items-center justify-center py-24 bg-muted/30">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-6" />
-                  <p className="text-xl font-medium text-foreground">جاري تحميل الشحنات...</p>
-                </div>
-              ) : selectedDelegate?.shipments && selectedDelegate.shipments.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableHead className="text-right w-[150px] px-6 py-4 font-medium text-lg">رقم الشحنة</TableHead>
-                        <TableHead className="text-right w-[200px] px-6 py-4 font-medium text-lg">العميل</TableHead>
-                        <TableHead className="text-right min-w-[250px] px-6 py-4 font-medium text-lg">العنوان</TableHead>
-                        <TableHead className="text-right w-[120px] px-6 py-4 font-medium text-lg">الحالة</TableHead>
-                        <TableHead className="text-right w-[120px] px-6 py-4 font-medium text-lg">المبلغ</TableHead>
-                        <TableHead className="text-right w-[150px] px-6 py-4 font-medium text-lg">التاريخ</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedDelegate.shipments.map((shipment) => (
-                        <TableRow 
-                          key={shipment.id}
-                          className="hover:bg-muted/40 transition-colors cursor-pointer border-b border-border/50"
-                          onClick={() => navigate(`/app/shipments/${shipment.id}`)}
-                        >
-                          <TableCell className="px-6 py-4 font-mono font-medium text-primary text-lg">{shipment.tracking_number}</TableCell>
-                          <TableCell className="px-6 py-4 font-medium text-foreground text-lg">{shipment.customer}</TableCell>
-                          <TableCell className="px-6 py-4 text-base text-muted-foreground max-w-[300px] truncate">
-                            {shipment.recipient_address}
-                          </TableCell>
-                          <TableCell className="px-6 py-4">
-                            <Badge variant="outline" className={cn(
-                              "px-3 py-1.5 text-base font-medium rounded-full whitespace-nowrap",
-                              statusColors[shipment.status] || "bg-gray-100 text-gray-800"
-                            )}>
-                              {statusLabels[shipment.status] || "مش معروف"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="px-6 py-4 font-bold text-green-600 text-lg">{shipment.amount.toLocaleString()} ج.م</TableCell>
-                          <TableCell className="px-6 py-4 text-base text-muted-foreground font-medium">
-                            {format(new Date(shipment.created_at), 'dd/MM HH:mm', { locale: ar })}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="p-12 text-center text-muted-foreground bg-muted/30">
-                  <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-                    <Package className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                  <p className="text-2xl font-medium mb-3">مفيش شحنات لهذا المندوب</p>
-                  <p className="text-lg text-muted-foreground max-w-md mx-auto mb-8">
-                    يمكن إضافة شحنات جديدة من خلال صفحة إضافة شحنة. المندوب هيبدأ يستقبل شحنات فور إضافته للنظام.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    className="gap-2 px-8 py-5 text-lg"
-                    onClick={() => navigate('/app/shipments/add')}
-                  >
-                    <Package className="h-5 w-5" />
-                    إضافة شحنة جديدة
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// مكون بطاقات الإحصائيات
 const StatCard = ({ icon, label, value, color, bgColor }: {
   icon: React.ReactNode;
   label: string;
@@ -743,41 +734,19 @@ const StatCard = ({ icon, label, value, color, bgColor }: {
   color: string;
   bgColor: string;
 }) => (
-  <Card className="rounded-xl shadow-sm border-border hover:shadow-md transition-shadow">
-    <CardContent className="p-5 md:p-6">
+  <Card className="rounded-2xl shadow-lg border-gray-200 hover:shadow-xl transition-shadow">
+    <CardContent className="p-8">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-base text-muted-foreground mb-1.5 font-medium">{label}</p>
-          <p className={cn("text-3xl font-bold", color)}>{value}</p>
+          <p className="text-lg text-gray-600 font-medium mb-2">{label}</p>
+          <p className={cn("text-4xl font-bold", color)}>{value}</p>
         </div>
-        <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", bgColor)}>
+        <div className={cn("p-5 rounded-2xl", bgColor)}>
           {icon}
         </div>
       </div>
     </CardContent>
   </Card>
-);
-
-// أيقونة الشاحنة المخصصة
-const TruckIcon = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-    className={className}
-  >
-    <circle cx="7" cy="17" r="2" />
-    <circle cx="17" cy="17" r="2" />
-    <rect x="3" y="11" width="18" height="8" rx="2" />
-    <path d="M7 11V7a3 3 0 0 1 6 0v4" />
-    <path d="M17 11V7a3 3 0 0 1 6 0v4" />
-  </svg>
 );
 
 export default DelegateShipments;
